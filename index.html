@@ -90,6 +90,7 @@
   --transition: 0.18s cubic-bezier(.4,0,.2,1);
   --blur: blur(18px) saturate(1.6);
   --blur-sm: blur(10px) saturate(1.4);
+  --table-zoom: 1; /* initialized here; updated via JS on zoom change */
 }
 
 [data-theme="dark"] {
@@ -519,54 +520,59 @@ body::before {
 .th-holiday { background: rgba(40,10,10,0.88) !important; }
 .th-today   { background: rgba(20,40,100,0.88) !important; }
 
-/* Warning pulse on understaffed days */
+/* Warning pulse on understaffed days – scales with zoom */
+:root { --table-zoom: 1; }
 .warn-dot {
-  width: 8px; height: 8px;
+  width: calc(8px / var(--table-zoom));
+  height: calc(8px / var(--table-zoom));
+  min-width: 5px; min-height: 5px;
+  max-width: 14px; max-height: 14px;
   border-radius: 50%;
   background: #f59e0b;
-  margin-top: 2px;
+  margin-top: 1px;
   flex-shrink: 0;
   animation: warnPulse 1.4s ease-in-out infinite;
-  box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
 }
 .warn-dot.critical {
   background: #ef4444;
   animation: warnPulseCritical 1.0s ease-in-out infinite;
-  box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
 }
 @keyframes warnPulse {
-  0%   { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.8); transform: scale(1); }
-  50%  { box-shadow: 0 0 0 5px rgba(245, 158, 11, 0); transform: scale(1.2); }
-  100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); transform: scale(1); }
+  0%   { box-shadow: 0 0 0 0 rgba(245,158,11,0.8); transform: scale(1); }
+  50%  { box-shadow: 0 0 0 calc(5px / var(--table-zoom)) rgba(245,158,11,0); transform: scale(1.2); }
+  100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); transform: scale(1); }
 }
 @keyframes warnPulseCritical {
-  0%   { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.9); transform: scale(1); }
-  50%  { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); transform: scale(1.25); }
-  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); transform: scale(1); }
+  0%   { box-shadow: 0 0 0 0 rgba(239,68,68,0.9); transform: scale(1); }
+  50%  { box-shadow: 0 0 0 calc(6px / var(--table-zoom)) rgba(239,68,68,0); transform: scale(1.25); }
+  100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); transform: scale(1); }
 }
 /* Warn row: dot + labels inline */
 .warn-row {
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: calc(3px / var(--table-zoom));
   justify-content: center;
   margin-top: 2px;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
+  max-width: 100%;
+  overflow: hidden;
 }
 .warn-label {
-  font-size: 8px;
+  font-size: calc(8px / var(--table-zoom));
   font-weight: 700;
   font-family: 'Space Mono', monospace;
   letter-spacing: 0;
   line-height: 1;
-  background: rgba(245, 158, 11, 0.2);
+  background: rgba(245,158,11,0.2);
   color: #f59e0b;
-  border-radius: 3px;
-  padding: 1px 3px;
+  border-radius: calc(3px / var(--table-zoom));
+  padding: calc(1.5px / var(--table-zoom)) calc(3.5px / var(--table-zoom));
   white-space: nowrap;
+  min-font-size: 6px;
 }
 .warn-label.critical {
-  background: rgba(239, 68, 68, 0.2);
+  background: rgba(239,68,68,0.22);
   color: #ef4444;
 }
 
@@ -676,6 +682,88 @@ body::before {
   border: 1.5px solid var(--surface);
   box-shadow: 0 0 4px rgba(245,158,11,0.6);
 }
+/* Tausch-Marker */
+.shift-badge .swap-dot {
+  position: absolute;
+  top: -3px; left: -3px;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #06b6d4, #0ea5e9);
+  border: 1.5px solid var(--surface);
+  box-shadow: 0 0 6px rgba(6,182,212,0.7);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 8px;
+  animation: swapPulse 2s ease-in-out infinite;
+}
+@keyframes swapPulse {
+  0%,100% { box-shadow: 0 0 4px rgba(6,182,212,0.7); }
+  50%      { box-shadow: 0 0 10px rgba(6,182,212,1); }
+}
+
+/* Stats Modal */
+.stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.stats-table th {
+  text-align: left;
+  padding: 8px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text3);
+  border-bottom: 1.5px solid var(--border);
+}
+.stats-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  vertical-align: middle;
+}
+.stats-table tr:last-child td { border-bottom: none; }
+.stats-table tr:hover td { background: var(--glass2); }
+.stats-bar-wrap {
+  width: 90px;
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.stats-bar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+.stats-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.stats-card {
+  background: var(--glass2);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  text-align: center;
+  backdrop-filter: var(--blur-sm);
+}
+.stats-card-val {
+  font-size: 22px;
+  font-weight: 700;
+  font-family: 'Space Mono', monospace;
+  color: var(--accent);
+  line-height: 1;
+}
+.stats-card-lbl {
+  font-size: 10px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-top: 4px;
+}
 
 /* Inline note chip below badge */
 .shift-note-tag {
@@ -704,11 +792,92 @@ body::before {
   max-width: 44px;
   line-height: 1.3;
 }
-[data-theme="dark"] .shift-note-tag {
-  background: rgba(245, 158, 11, 0.15);
-  border-color: rgba(245, 158, 11, 0.3);
-}
+[data-theme="dark"] .shift-note-tag { background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.3); }
 [data-theme="dark"] .shift-note-tag-text { color: #fcd34d; }
+
+/* Note-only chip (no shift assigned) */
+/* Ruhezeit-Verletzung Badge (ND→FD <11h) */
+.rest-violation-badge {
+  position: absolute;
+  bottom: calc(2px / var(--table-zoom));
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: calc(7px / var(--table-zoom));
+  font-weight: 700;
+  font-family: 'Space Mono', monospace;
+  background: rgba(239,68,68,0.18);
+  color: #f87171;
+  border: 1px solid rgba(239,68,68,0.4);
+  border-radius: calc(3px / var(--table-zoom));
+  padding: calc(1px / var(--table-zoom)) calc(3px / var(--table-zoom));
+  white-space: nowrap;
+  pointer-events: none;
+  animation: restPulse 2.5s ease-in-out infinite;
+  z-index: 3;
+  min-font-size: 5px;
+}
+@keyframes restPulse {
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}
+
+/* Improved note-only chip */
+.note-only-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 5px auto 3px;
+  padding: 4px 5px;
+  border-radius: 6px;
+  background: rgba(245,158,11,0.13);
+  border: 1.5px dashed rgba(245,158,11,0.6);
+  width: 46px;
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition), transform var(--transition);
+  gap: 1px;
+  box-shadow: 0 1px 4px rgba(245,158,11,0.15);
+}
+.note-only-chip:hover {
+  background: rgba(245,158,11,0.24);
+  border-color: rgba(245,158,11,0.9);
+  transform: scale(1.05);
+}
+.note-only-icon {
+  font-size: 11px;
+  color: #d97706;
+  line-height: 1;
+}
+.note-only-text {
+  font-size: 7px;
+  color: #92400e;
+  font-style: italic;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 40px;
+  text-align: center;
+  line-height: 1.2;
+}
+.note-only-cell { min-height: 64px; }
+[data-theme="dark"] .note-only-chip { background: rgba(245,158,11,0.14); border-color: rgba(245,158,11,0.5); }
+[data-theme="dark"] .note-only-icon { color: #fbbf24; }
+[data-theme="dark"] .note-only-text  { color: #fcd34d; }
+
+/* Employee cell context menu trigger */
+.employee-cell { cursor: context-menu; }
+.emp-fill-hint {
+  font-size: 9px;
+  color: var(--text3);
+  letter-spacing: 0;
+  opacity: 0;
+  transition: opacity var(--transition);
+  line-height: 1;
+  margin-top: 2px;
+}
+.employee-cell:hover .emp-fill-hint { opacity: 1; }
 
 /* Footer rows */
 .footer-row td {
@@ -1008,7 +1177,7 @@ body::before {
 .toggle-switch input:checked + .toggle-slider::before { transform: translateX(16px); }
 
 /* Context menu – glass */
-#context-menu {
+#context-menu, #emp-context-menu {
   position: fixed;
   background: var(--glass);
   backdrop-filter: var(--blur);
@@ -1019,9 +1188,9 @@ body::before {
   z-index: 3000;
   box-shadow: var(--shadow-lg);
   display: none;
-  min-width: 190px;
+  min-width: 210px;
 }
-#context-menu.visible { display: block; }
+#context-menu.visible, #emp-context-menu.visible { display: block; }
 .ctx-item {
   padding: 8px 13px;
   border-radius: 8px;
@@ -1373,11 +1542,22 @@ body::before {
   </div>
 </div>
 
-<!-- CONTEXT MENU -->
+<!-- CONTEXT MENU (day cells) -->
 <div id="context-menu">
   <div class="ctx-item" id="ctx-note">✏️ Notiz bearbeiten</div>
+  <div class="ctx-item" id="ctx-swap">🔄 Zum Tauschen ausschreiben</div>
   <div class="ctx-divider"></div>
   <div class="ctx-item" id="ctx-clear" style="color:#ef4444">🗑️ Dienst löschen</div>
+</div>
+
+<!-- CONTEXT MENU (employee name) -->
+<div id="emp-context-menu">
+  <div style="padding:7px 13px 5px;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.7px;" id="emp-ctx-label">Mitarbeiter</div>
+  <div class="ctx-divider" style="margin:2px 0 4px"></div>
+  <div class="ctx-item" id="emp-ctx-fill">🖊️ Alle leeren Werktage ausfüllen</div>
+  <div class="ctx-item" id="emp-ctx-fill-all">📋 Alle leeren Tage ausfüllen (inkl. WE)</div>
+  <div class="ctx-divider"></div>
+  <div class="ctx-item" id="emp-ctx-clear-month" style="color:#f87171">🗑️ Ganzen Monat löschen</div>
 </div>
 
 <!-- ============================================================
@@ -1434,6 +1614,7 @@ body::before {
   <button class="header-btn" onclick="openModal('modal-employees')" title="Mitarbeiter verwalten">👥</button>
   <button class="header-btn" onclick="openModal('modal-shifts')" title="Dienste konfigurieren">⚙️</button>
   <button class="header-btn" onclick="openModal('modal-settings')" title="Einstellungen">☰</button>
+  <button class="header-btn" onclick="openStatsModal()" title="Monatsstatistik">📊</button>
   <button class="header-btn" id="theme-btn" onclick="toggleTheme()" title="Dark/Light Mode">🌙</button>
 
   <button class="export-btn" onclick="printPDF()">📄 Export</button>
@@ -1562,6 +1743,20 @@ body::before {
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="closeModal('modal-settings')">Schließen</button>
       <button class="btn btn-primary" onclick="applySettings()">Übernehmen</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: MONATSSTATISTIK -->
+<div class="modal-overlay" id="modal-stats">
+  <div class="modal" style="min-width:560px;max-width:700px">
+    <div class="modal-title">
+      📊 Monatsstatistik – <span id="stats-month-label"></span>
+      <button class="modal-close" onclick="closeModal('modal-stats')">×</button>
+    </div>
+    <div id="stats-content"></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeModal('modal-stats')">Schließen</button>
     </div>
   </div>
 </div>
@@ -1880,20 +2075,18 @@ function renderTable() {
     else if (isHol) cls = 'th-holiday';
     else if (wknd) cls = 'th-weekend';
 
-    // Warning logic: only on weekdays that are not holidays
+    // Warning logic: ALL days (inkl. Wochenende & Feiertage)
     let warnHTML = '';
-    if (!wknd && !isHol) {
-      const missingShifts = WARN_SHIFTS.filter(sid => (dayCounts[ds][sid] || 0) < MIN_STAFF);
-      if (missingShifts.length > 0) {
-        const hasCritical = missingShifts.some(sid => (dayCounts[ds][sid] || 0) === 0);
-        const dotClass = hasCritical ? 'warn-dot critical' : 'warn-dot';
-        const labelsHTML = missingShifts.map(sid => {
-          const cnt = dayCounts[ds][sid] || 0;
-          const isCrit = cnt === 0;
-          return `<span class="warn-label${isCrit ? ' critical' : ''}" title="${sid}: nur ${cnt} von 2">${sid}:${cnt}</span>`;
-        }).join('');
-        warnHTML = `<div class="warn-row"><div class="${dotClass}"></div>${labelsHTML}</div>`;
-      }
+    const missingShifts = WARN_SHIFTS.filter(sid => (dayCounts[ds][sid] || 0) < MIN_STAFF);
+    if (missingShifts.length > 0) {
+      const hasCritical = missingShifts.some(sid => (dayCounts[ds][sid] || 0) === 0);
+      const dotClass = hasCritical ? 'warn-dot critical' : 'warn-dot';
+      const labelsHTML = missingShifts.map(sid => {
+        const cnt = dayCounts[ds][sid] || 0;
+        const isCrit = cnt === 0;
+        return `<span class="warn-label${isCrit ? ' critical' : ''}" title="${sid}: nur ${cnt} von mind. 2">${sid}:${cnt}</span>`;
+      }).join('');
+      warnHTML = `<div class="warn-row"><div class="${dotClass}"></div>${labelsHTML}</div>`;
     }
 
     thHTML += `<th class="${cls}"><div class="th-inner">
@@ -1931,9 +2124,12 @@ function renderTable() {
       ondrop="dropRow(event,'${emp.id}')"
       ondragend="dragEnd(event)">`;
 
-    tbHTML += `<td class="employee-cell" ondblclick="openEditEmployee('${emp.id}')">
+    tbHTML += `<td class="employee-cell" 
+      ondblclick="openEditEmployee('${emp.id}')"
+      oncontextmenu="handleEmpContextMenu(event,'${emp.id}')">
       <div class="emp-name">${emp.name}</div>
       <div class="emp-role">${emp.role}</div>
+      <div class="emp-fill-hint">Rechtsklick: Ausfüllen…</div>
     </td>`;
 
     if (settings.cols.vz)   tbHTML += `<td class="stat-cell stat-vz" style="position:sticky;left:${statLeftMap.vz}px">${emp.vz}%</td>`;
@@ -1954,22 +2150,44 @@ function renderTable() {
 
       const empShifts = shifts[emp.id] || {};
       const cell = empShifts[ds];
-      const hasNote = !!(cell && cell.note);
+      const hasNote = !!(cell && cell.note && cell.note.trim());
+      const hasShift = !!(cell && cell.type);
       let inner = '';
 
       // Note-edit pencil button (shown on hover via CSS)
       const noteEditBtn = editLocked ? '' :
         `<button class="note-edit-btn" onclick="event.stopPropagation();openNotePopup('${emp.id}','${ds}')" title="Notiz bearbeiten">✎</button>`;
 
-      if (cell && cell.type) {
+      if (hasShift) {
         const st = shiftTypes.find(s => s.id === cell.type);
         if (st) {
           const noteDot = hasNote ? `<span class="note-dot"></span>` : '';
+          const swapDot = cell.swap ? `<span class="swap-dot" title="Zum Tauschen ausgeschrieben">🔄</span>` : '';
+
+          // ⚠️ Ruhezeit-Check: ND am Vortag + FD heute = <11h Ruhezeit (ArbZG §5)
+          let restBadge = '';
+          if (cell.type === 'FD') {
+            // Vortag ermitteln (auch Monatsgrenzen berücksichtigen)
+            let prevDs;
+            if (d > 1) {
+              prevDs = dateStr(currentYear, currentMonth, d - 1);
+            } else {
+              // Letzter Tag des Vormonats
+              const pm = currentMonth === 0 ? 11 : currentMonth - 1;
+              const py = currentMonth === 0 ? currentYear - 1 : currentYear;
+              prevDs = dateStr(py, pm, daysInMonth(py, pm));
+            }
+            const prevCell = shifts[emp.id]?.[prevDs];
+            if (prevCell?.type === 'ND') {
+              restBadge = `<div class="rest-violation-badge" title="⚠️ Ruhezeitverletzung: ND dann FD – weniger als 11h Ruhezeit! (ArbZG §5)">⚡11h</div>`;
+            }
+          }
+
           inner = `${noteEditBtn}<div class="shift-badge" style="background:${st.bg};color:${st.color}"
             onclick="handleCellClick(event,'${emp.id}','${ds}')"
             oncontextmenu="handleContextMenu(event,'${emp.id}','${ds}')"
-            title="${escapeHTML(st.name)}${cell.note ? '\\n✎ '+escapeHTML(cell.note) : ''}"
-            >${st.label}${noteDot}</div>`;
+            title="${escapeHTML(st.name)}${cell.note ? '\n✎ '+escapeHTML(cell.note) : ''}${cell.swap ? '\n🔄 Tauschen' : ''}${restBadge ? '\n⚡ Ruhezeitverletzung ND→FD <11h!' : ''}"
+            >${st.label}${noteDot}${swapDot}</div>${restBadge}`;
           if (hasNote) {
             inner += `<div class="shift-note-tag" title="${escapeHTML(cell.note)}">
               <span class="shift-note-tag-text">${escapeHTML(cell.note)}</span>
@@ -1977,10 +2195,20 @@ function renderTable() {
           }
         }
       } else {
+        // Kein Dienst – Notiz-Only-Chip falls Notiz vorhanden
         inner = noteEditBtn;
+        if (hasNote) {
+          inner += `<div class="note-only-chip"
+            onclick="event.stopPropagation();openNotePopup('${emp.id}','${ds}')"
+            oncontextmenu="event.stopPropagation();handleContextMenu(event,'${emp.id}','${ds}')"
+            title="✎ ${escapeHTML(cell.note)}">
+            <span class="note-only-icon">✎</span>
+            <span class="note-only-text">${escapeHTML(cell.note)}</span>
+          </div>`;
+        }
       }
 
-      tbHTML += `<td class="${cls}${hasNote?' has-note':''}"
+      tbHTML += `<td class="${cls}${hasNote?' has-note':''}${(!hasShift&&hasNote)?' note-only-cell':''}"
         onclick="handleCellClick(event,'${emp.id}','${ds}')"
         ondblclick="event.stopPropagation();openNotePopup('${emp.id}','${ds}')"
         oncontextmenu="handleContextMenu(event,'${emp.id}','${ds}')"
@@ -2022,14 +2250,22 @@ function renderTable() {
 function handleCellClick(e, empId, ds) {
   e.stopPropagation();
   if (editLocked) return;
+  // Don't trigger shift assignment when clicking note chip, pencil btn, or rest badge
+  if (e.target.closest('.note-only-chip') ||
+      e.target.closest('.note-edit-btn') ||
+      e.target.closest('.rest-violation-badge')) return;
   if (!shifts[empId]) shifts[empId] = {};
   const current = shifts[empId][ds];
 
   if (current && current.type === selectedShift) {
-    // Toggle off
-    delete shifts[empId][ds];
+    // Toggle off – preserve note if it exists
+    if (current.note && current.note.trim()) {
+      shifts[empId][ds] = { type: '', note: current.note, swap: false };
+    } else {
+      delete shifts[empId][ds];
+    }
   } else {
-    shifts[empId][ds] = { type: selectedShift, note: current?.note || '' };
+    shifts[empId][ds] = { type: selectedShift, note: current?.note || '', swap: current?.swap || false };
   }
   renderTable();
   saveLocal();
@@ -2039,11 +2275,89 @@ function handleContextMenu(e, empId, ds) {
   e.preventDefault();
   e.stopPropagation();
   contextTarget = { empId, ds };
+  updateContextMenuForTarget(empId, ds);
   const menu = document.getElementById('context-menu');
   menu.style.left = e.clientX + 'px';
   menu.style.top  = e.clientY + 'px';
   menu.classList.add('visible');
+  document.getElementById('emp-context-menu').classList.remove('visible');
 }
+
+// =============================================================================
+// EMPLOYEE CONTEXT MENU (Rechtsklick auf Mitarbeiternamen)
+// =============================================================================
+let empContextTarget = null;
+
+function handleEmpContextMenu(e, empId) {
+  e.preventDefault();
+  e.stopPropagation();
+  empContextTarget = empId;
+  const emp = employees.find(em => em.id === empId);
+  document.getElementById('emp-ctx-label').textContent = emp ? emp.name : 'Mitarbeiter';
+  const fillLabel = document.getElementById('emp-ctx-fill');
+  const st = shiftTypes.find(s => s.id === selectedShift);
+  const stLabel = st ? `"${st.label}" – ${st.name}` : selectedShift;
+  fillLabel.innerHTML = `🖊️ Werktage füllen mit <strong style="color:var(--accent)">${stLabel}</strong>`;
+  document.getElementById('emp-ctx-fill-all').innerHTML =
+    `📋 Alle Tage füllen mit <strong style="color:var(--accent)">${stLabel}</strong>`;
+  const menu = document.getElementById('emp-context-menu');
+  menu.style.left = e.clientX + 'px';
+  menu.style.top  = e.clientY + 'px';
+  menu.classList.add('visible');
+  document.getElementById('context-menu').classList.remove('visible');
+}
+
+document.getElementById('emp-ctx-fill').onclick = () => {
+  if (!empContextTarget || editLocked) return;
+  fillEmployeeMonth(empContextTarget, false);
+  document.getElementById('emp-context-menu').classList.remove('visible');
+};
+document.getElementById('emp-ctx-fill-all').onclick = () => {
+  if (!empContextTarget || editLocked) return;
+  fillEmployeeMonth(empContextTarget, true);
+  document.getElementById('emp-context-menu').classList.remove('visible');
+};
+document.getElementById('emp-ctx-clear-month').onclick = () => {
+  if (!empContextTarget || editLocked) return;
+  if (!confirm(`Gesamten Monat für ${employees.find(e=>e.id===empContextTarget)?.name || ''} löschen?`)) return;
+  const total = daysInMonth(currentYear, currentMonth);
+  if (!shifts[empContextTarget]) shifts[empContextTarget] = {};
+  for (let d = 1; d <= total; d++) {
+    const ds = dateStr(currentYear, currentMonth, d);
+    delete shifts[empContextTarget][ds];
+  }
+  document.getElementById('emp-context-menu').classList.remove('visible');
+  renderTable(); saveLocal();
+  showToast('🗑️ Monat geleert');
+};
+
+function fillEmployeeMonth(empId, includeWeekends) {
+  const holidays = getNRWHolidays(currentYear);
+  const total = daysInMonth(currentYear, currentMonth);
+  if (!shifts[empId]) shifts[empId] = {};
+  let filled = 0;
+  for (let d = 1; d <= total; d++) {
+    const ds = dateStr(currentYear, currentMonth, d);
+    const existing = shifts[empId][ds];
+    if (existing && existing.type) continue; // bereits belegt → überspringen
+    if (!includeWeekends) {
+      const dow = new Date(currentYear, currentMonth, d).getDay();
+      if (dow === 0 || dow === 6) continue; // Wochenende überspringen
+      if (holidays[ds]) continue; // Feiertag überspringen
+    }
+    shifts[empId][ds] = { type: selectedShift, note: existing?.note || '', swap: false };
+    filled++;
+  }
+  renderTable(); saveLocal();
+  const st = shiftTypes.find(s => s.id === selectedShift);
+  showToast(`✓ ${filled} Tage mit ${st?.label || selectedShift} gefüllt`);
+}
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#emp-context-menu')) {
+    document.getElementById('emp-context-menu').classList.remove('visible');
+  }
+});
 
 document.getElementById('ctx-clear').onclick = () => {
   if (contextTarget && !editLocked) {
@@ -2059,6 +2373,27 @@ document.getElementById('ctx-note').onclick = () => {
   if (contextTarget) openNotePopup(contextTarget.empId, contextTarget.ds);
   document.getElementById('context-menu').classList.remove('visible');
 };
+
+document.getElementById('ctx-swap').onclick = () => {
+  if (contextTarget && !editLocked) {
+    const {empId, ds} = contextTarget;
+    if (!shifts[empId]) shifts[empId] = {};
+    if (!shifts[empId][ds]) shifts[empId][ds] = { type: '', note: '', swap: false };
+    shifts[empId][ds].swap = !shifts[empId][ds].swap;
+    const isNow = shifts[empId][ds].swap;
+    renderTable();
+    saveLocal();
+    showToast(isNow ? '🔄 Als Tauschtag markiert' : '✓ Tauschmarkierung entfernt');
+  }
+  document.getElementById('context-menu').classList.remove('visible');
+};
+
+// Update swap menu label based on current state
+function updateContextMenuForTarget(empId, ds) {
+  const swapItem = document.getElementById('ctx-swap');
+  const isSwap = shifts[empId]?.[ds]?.swap;
+  swapItem.textContent = isSwap ? '✓ Tausch aufheben' : '🔄 Zum Tauschen ausschreiben';
+}
 
 document.addEventListener('click', () => {
   document.getElementById('context-menu').classList.remove('visible');
@@ -2151,8 +2486,13 @@ function setZoom(val) {
 }
 
 function applyZoom() {
-  document.getElementById('plan-table').style.transform = `scale(${currentZoom})`;
-  document.getElementById('plan-wrapper').style.width = `${Math.round(currentZoom*100)}%`;
+  const t = document.getElementById('plan-table');
+  const w = document.getElementById('plan-wrapper');
+  t.style.transform = `scale(${currentZoom})`;
+  t.style.transformOrigin = 'top left';
+  w.style.width = `${Math.round(currentZoom * 100)}%`;
+  // Inject zoom as CSS var so warn-row elements scale proportionally
+  document.documentElement.style.setProperty('--table-zoom', currentZoom);
 }
 
 function adjustZoom(delta) {
@@ -2275,6 +2615,122 @@ function renderYearView() {
 }
 
 // =============================================================================
+// NEUE FUNKTION 1: MONATSSTATISTIK
+// Warum: Die Leitung braucht auf Knopfdruck eine Übersicht – wer ist über/unter Soll,
+// wie viele Krankentage, Urlaubstage und Tausch-Markierungen gibt es diesen Monat.
+// Das ist der tägl. Blick, den man sonst manuell zusammenrechnet.
+// =============================================================================
+function openStatsModal() {
+  document.getElementById('stats-month-label').textContent =
+    `${MONTHS_DE[currentMonth]} ${currentYear}`;
+  renderStatsContent();
+  openModal('modal-stats');
+}
+
+function renderStatsContent() {
+  const cont = document.getElementById('stats-content');
+  const workdays  = getWorkdays(currentYear, currentMonth);
+  const total     = daysInMonth(currentYear, currentMonth);
+
+  // Global summary
+  let totalIst = 0, totalSoll = 0, sickDays = 0, vacDays = 0, swapCount = 0;
+  employees.forEach(emp => {
+    const soll = calcSoll(emp.vz, workdays, settings.hourFactor);
+    const ist  = calcIst(emp.id, currentYear, currentMonth);
+    totalIst  += ist;
+    totalSoll += soll;
+    for (let d = 1; d <= total; d++) {
+      const ds = dateStr(currentYear, currentMonth, d);
+      const c  = shifts[emp.id]?.[ds];
+      if (!c) continue;
+      if (c.type === 'K') sickDays++;
+      if (c.type === 'U') vacDays++;
+      if (c.swap) swapCount++;
+    }
+  });
+
+  const maxIst = Math.max(...employees.map(emp => calcIst(emp.id, currentYear, currentMonth)), 1);
+
+  let html = `
+  <div class="stats-summary">
+    <div class="stats-card">
+      <div class="stats-card-val">${Math.round(totalIst)}h</div>
+      <div class="stats-card-lbl">Gesamt Ist</div>
+    </div>
+    <div class="stats-card">
+      <div class="stats-card-val">${Math.round(totalSoll)}h</div>
+      <div class="stats-card-lbl">Gesamt Soll</div>
+    </div>
+    <div class="stats-card">
+      <div class="stats-card-val" style="color:#f87171">${sickDays}</div>
+      <div class="stats-card-lbl">Krank-Tage</div>
+    </div>
+    <div class="stats-card">
+      <div class="stats-card-val" style="color:#34d399">${vacDays}</div>
+      <div class="stats-card-lbl">Urlaubstage</div>
+    </div>
+  </div>
+  ${swapCount > 0 ? `<div style="margin-bottom:14px;padding:8px 12px;background:rgba(6,182,212,0.1);border:1px solid rgba(6,182,212,0.3);border-radius:8px;font-size:12px;color:#06b6d4;">🔄 ${swapCount} Tausch-Markierung${swapCount!==1?'en':''} diesen Monat</div>` : ''}
+  <table class="stats-table">
+    <thead>
+      <tr>
+        <th>Mitarbeiter</th>
+        <th>VZ</th>
+        <th>Soll</th>
+        <th>Ist</th>
+        <th style="min-width:90px">Auslastung</th>
+        <th>Diff</th>
+        <th>K</th>
+        <th>U</th>
+      </tr>
+    </thead>
+    <tbody>`;
+
+  employees.forEach(emp => {
+    const soll  = calcSoll(emp.vz, workdays, settings.hourFactor);
+    const ist   = calcIst(emp.id, currentYear, currentMonth);
+    const diff  = Math.round((ist - soll + (emp.vmt||0)) * 10) / 10;
+    const diffSign  = diff >= 0 ? '+' : '';
+    const diffColor = diff >= 0 ? '#34d399' : '#f87171';
+    const pct  = soll > 0 ? Math.min(100, Math.round(ist / soll * 100)) : 0;
+    const barColor = pct >= 95 ? '#34d399' : pct >= 70 ? 'var(--accent)' : '#f87171';
+
+    let sick = 0, vac = 0;
+    for (let d = 1; d <= total; d++) {
+      const ds = dateStr(currentYear, currentMonth, d);
+      const c  = shifts[emp.id]?.[ds];
+      if (!c) continue;
+      if (c.type === 'K') sick++;
+      if (c.type === 'U') vac++;
+    }
+
+    html += `<tr>
+      <td>
+        <div style="font-weight:600;font-size:11.5px">${escapeHTML(emp.name)}</div>
+        <div style="font-size:9.5px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px">${escapeHTML(emp.role)}</div>
+      </td>
+      <td style="color:var(--accent);font-family:'Space Mono',monospace">${emp.vz}%</td>
+      <td style="font-family:'Space Mono',monospace">${soll}h</td>
+      <td style="font-family:'Space Mono',monospace">${ist}h</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="stats-bar-wrap">
+            <div class="stats-bar" style="width:${pct}%;background:${barColor}"></div>
+          </div>
+          <span style="font-size:10px;font-family:'Space Mono',monospace;color:var(--text3)">${pct}%</span>
+        </div>
+      </td>
+      <td style="color:${diffColor};font-weight:700;font-family:'Space Mono',monospace">${diffSign}${diff}h</td>
+      <td style="color:#f87171;font-weight:600">${sick||'–'}</td>
+      <td style="color:#34d399;font-weight:600">${vac||'–'}</td>
+    </tr>`;
+  });
+
+  html += `</tbody></table>`;
+  cont.innerHTML = html;
+}
+
+// =============================================================================
 // LOCK
 // =============================================================================
 function toggleLock() {
@@ -2300,8 +2756,9 @@ function toggleTheme() {
 // =============================================================================
 function openModal(id) {
   if (id === 'modal-employees') renderEmpList();
-  if (id === 'modal-shifts') renderShiftConfig();
-  if (id === 'modal-settings') renderSettings();
+  if (id === 'modal-shifts')    renderShiftConfig();
+  if (id === 'modal-settings')  renderSettings();
+  if (id === 'modal-stats')     renderStatsContent();
   document.getElementById(id).classList.add('visible');
 }
 

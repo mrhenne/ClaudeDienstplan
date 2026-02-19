@@ -451,15 +451,16 @@ body::before {
 }
 
 #plan-wrapper {
-  background: var(--glass);
+  background: rgba(255,255,255,0.72);
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
   border-radius: 16px;
-  overflow: hidden;
+  overflow: clip; /* clip visually but DOES NOT break position:sticky */
   box-shadow: var(--shadow-glass);
   border: 1px solid var(--glass-border);
   min-width: fit-content;
 }
+[data-theme="dark"] #plan-wrapper { background: rgba(14,16,32,0.72); }
 
 /* ==========================================
    TABLE
@@ -468,15 +469,14 @@ body::before {
   border-collapse: collapse;
   font-size: 12px;
   width: 100%;
-  transform-origin: top left;
-  transition: transform 0.1s;
+  /* NOTE: zoom (not transform:scale) is used for zooming so sticky headers still work */
 }
 
 /* Header row */
 #plan-table thead th {
-  background: rgba(14,16,32,0.82);
+  background: rgba(14,16,32,0.90);
   backdrop-filter: var(--blur);
-  color: rgba(255,255,255,0.88);
+  color: rgba(255,255,255,0.92);
   padding: 0;
   white-space: nowrap;
   font-weight: 600;
@@ -484,12 +484,23 @@ body::before {
   border: none;
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 12; /* above sticky left columns */
+}
+
+/* Corner cell: sticky top AND left – must be above both */
+#plan-table thead th.emp-th {
+  z-index: 20;
+  left: 0;
+  background: rgba(10,12,28,0.95) !important;
+}
+/* Stat column headers: sticky top AND left */
+#plan-table thead th.stat-th {
+  z-index: 16;
 }
 
 .th-inner {
-  padding: 6px 4px;
-  border-right: 1px solid rgba(255,255,255,0.07);
+  padding: 6px 5px;
+  border-right: 1px solid rgba(255,255,255,0.08);
   min-height: 60px;
   height: auto;
   display: flex;
@@ -507,18 +518,19 @@ body::before {
   font-weight: 700;
   font-family: 'Space Mono', monospace;
   line-height: 1;
+  color: rgba(255,255,255,0.95);
 }
 .th-day-name {
   font-size: 9px;
-  font-weight: 500;
-  letter-spacing: 0.8px;
+  font-weight: 600;
+  letter-spacing: 1px;
   text-transform: uppercase;
-  opacity: 0.5;
+  color: rgba(255,255,255,0.55);
 }
 
-.th-weekend { background: rgba(30,20,10,0.88) !important; }
-.th-holiday { background: rgba(40,10,10,0.88) !important; }
-.th-today   { background: rgba(20,40,100,0.88) !important; }
+.th-weekend { background: rgba(25,18,6,0.92) !important; }
+.th-holiday { background: rgba(40,8,8,0.92) !important; }
+.th-today   { background: rgba(18,38,100,0.92) !important; }
 
 /* Warning pulse on understaffed days – scales with zoom */
 :root { --table-zoom: 1; }
@@ -588,16 +600,20 @@ body::before {
   min-width: 150px;
   padding: 7px 10px 7px 14px;
   cursor: pointer;
-  background: var(--glass);
-  backdrop-filter: var(--blur-sm);
+  background: rgba(248,250,255,0.97);
   position: sticky;
   left: 0;
-  z-index: 5;
-  border-right: 1px solid var(--glass-border2) !important;
+  z-index: 8;
+  border-right: 2px solid rgba(130,150,200,0.3) !important;
+  box-shadow: 2px 0 8px rgba(60,80,160,0.08);
 }
-.employee-cell:hover { background: var(--glass2); }
-.emp-name { font-weight: 700; font-size: 11.5px; color: var(--text); letter-spacing: 0.1px; }
-.emp-role  { font-size: 9.5px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.6px; margin-top: 1px; }
+[data-theme="dark"] .employee-cell { background: rgba(12,14,28,0.97); box-shadow: 2px 0 8px rgba(0,0,0,0.35); }
+.employee-cell:hover { background: rgba(235,240,255,1); }
+[data-theme="dark"] .employee-cell:hover { background: rgba(22,26,52,0.98); }
+.emp-name { font-weight: 700; font-size: 11.5px; color: #1a1d2e; letter-spacing: 0.1px; }
+[data-theme="dark"] .emp-name { color: #eef0ff; }
+.emp-role  { font-size: 9.5px; color: #5e6a94; text-transform: uppercase; letter-spacing: 0.6px; margin-top: 1px; }
+[data-theme="dark"] .emp-role { color: #6878a8; }
 
 .stat-cell {
   text-align: center;
@@ -605,14 +621,20 @@ body::before {
   padding: 6px 4px;
   font-family: 'Space Mono', monospace;
   font-size: 11px;
-  background: var(--glass2);
-  backdrop-filter: var(--blur-sm);
+  font-weight: 600;
+  background: rgba(242,245,255,0.97);
   position: sticky;
-  z-index: 4;
+  z-index: 6;
+  color: #2a3258;
+  border-right: 1px solid rgba(130,150,200,0.2);
 }
-.stat-cell.negative { color: #f87171; }
-.stat-cell.positive { color: #34d399; }
-.stat-vz { color: var(--accent); }
+[data-theme="dark"] .stat-cell { background: rgba(16,18,36,0.97); color: #a8b4d8; }
+.stat-cell.negative { color: #c81e1e; }
+.stat-cell.positive { color: #15803d; }
+.stat-vz { color: #1d4ed8; }
+[data-theme="dark"] .stat-cell.negative { color: #f87171; }
+[data-theme="dark"] .stat-cell.positive { color: #34d399; }
+[data-theme="dark"] .stat-vz { color: #7da4ff; }
 
 .day-cell {
   min-width: 54px;
@@ -624,15 +646,19 @@ body::before {
   transition: background var(--transition);
   position: relative;
   padding-bottom: 4px;
+  background: rgba(255,255,255,0.42);
 }
+[data-theme="dark"] .day-cell { background: rgba(255,255,255,0.04); }
 /* Cells with notes get a bit more height so note chip fits */
-.day-cell.has-note {
-  min-height: 72px;
-}
-.day-cell:hover { background: var(--surface2); }
-.day-cell.weekend { background: var(--weekend); }
-.day-cell.holiday { background: var(--holiday); }
-.day-cell.today-col { background: var(--today); }
+.day-cell.has-note { min-height: 72px; }
+.day-cell:hover { background: rgba(220,230,255,0.75) !important; }
+[data-theme="dark"] .day-cell:hover { background: rgba(60,80,160,0.25) !important; }
+.day-cell.weekend { background: rgba(255,240,200,0.55); }
+.day-cell.holiday { background: rgba(255,210,210,0.55); }
+.day-cell.today-col { background: rgba(200,220,255,0.65); }
+[data-theme="dark"] .day-cell.weekend { background: rgba(50,35,5,0.6); }
+[data-theme="dark"] .day-cell.holiday { background: rgba(50,10,10,0.6); }
+[data-theme="dark"] .day-cell.today-col { background: rgba(20,50,120,0.5); }
 
 /* Note-edit overlay on hover */
 .day-cell:hover .note-edit-btn { opacity: 1; }
@@ -814,11 +840,34 @@ body::before {
   pointer-events: none;
   animation: restPulse 2.5s ease-in-out infinite;
   z-index: 3;
-  min-font-size: 5px;
+}
+/* critical = ND→FD/ZD: ~0-2h (bright red, fast pulse) */
+.rest-violation-badge.critical {
+  background: rgba(220,38,38,0.28);
+  color: #fca5a5;
+  border-color: rgba(220,38,38,0.7);
+  animation: restPulseFast 1s ease-in-out infinite;
+}
+/* high = SD/ST→FD/ZD: ~7-10h (amber) */
+.rest-violation-badge.high {
+  background: rgba(245,158,11,0.20);
+  color: #fcd34d;
+  border-color: rgba(245,158,11,0.5);
+}
+/* border = ZD/LT→FD: ~11-12h (yellow, subtle) */
+.rest-violation-badge.border {
+  background: rgba(234,179,8,0.14);
+  color: #fef08a;
+  border-color: rgba(234,179,8,0.35);
+  animation: restPulse 4s ease-in-out infinite;
 }
 @keyframes restPulse {
   0%,100% { opacity: 1; }
   50%      { opacity: 0.55; }
+}
+@keyframes restPulseFast {
+  0%,100% { opacity: 1; box-shadow: 0 0 0 0 rgba(220,38,38,0.5); }
+  50%      { opacity: 0.7;  box-shadow: 0 0 4px 2px rgba(220,38,38,0.3); }
 }
 
 /* Improved note-only chip */
@@ -1556,7 +1605,7 @@ body::before {
   #main { display: block; overflow: visible; }
   #table-container { overflow: visible; padding: 0; }
   #plan-wrapper { box-shadow: none; border-radius: 0; overflow: visible; background: white !important; backdrop-filter: none; }
-  #plan-table { font-size: 9px !important; transform: none !important; }
+  #plan-table { font-size: 9px !important; zoom: 1 !important; }
   #plan-table thead th { background: #1a1d2e !important; }
   #plan-table td, #plan-table th { padding: 2px 3px !important; }
   .shift-badge { width: 28px !important; height: 22px !important; font-size: 9px !important; }
@@ -2320,22 +2369,57 @@ function renderTable() {
           const noteDot = hasNote ? `<span class="note-dot"></span>` : '';
           const swapDot = cell.swap ? `<span class="swap-dot" title="Zum Tauschen ausgeschrieben">🔄</span>` : '';
 
-          // ⚠️ Ruhezeit-Check: ND am Vortag + FD heute = <11h Ruhezeit (ArbZG §5)
+          // ⚡ Ruhezeit-Check (ArbZG §5 – mind. 11h Ruhezeit)
+          // Typische Schichtzeiten im Krankenhaus:
+          //   ND: 22:00 – 06:00 (endet morgens!) → FD/ZD selber Tag = 0-2h Pause = KRITISCH
+          //   SD: 14:00 – 22:30 → FD nächster Tag 06:00 = ~7.5h < 11h = VERLETZUNG
+          //   ST: 13:00 – 22:00 → FD nächster Tag 06:00 = ~8h < 11h = VERLETZUNG
+          //   ZD: 08:00 – 18:00 → FD nächster Tag 06:00 = ~12h = GRENZWERTIG
+          //   LT: Ganztags  → FD nächster Tag = ggf. zu kurz
           let restBadge = '';
-          if (cell.type === 'FD') {
-            // Vortag ermitteln (auch Monatsgrenzen berücksichtigen)
-            let prevDs;
-            if (d > 1) {
-              prevDs = dateStr(currentYear, currentMonth, d - 1);
-            } else {
-              // Letzter Tag des Vormonats
-              const pm = currentMonth === 0 ? 11 : currentMonth - 1;
-              const py = currentMonth === 0 ? currentYear - 1 : currentYear;
-              prevDs = dateStr(py, pm, daysInMonth(py, pm));
+          // Get prev day date string (cross-month-border aware)
+          const getPrevDs = (day) => {
+            if (day > 1) return dateStr(currentYear, currentMonth, day - 1);
+            const pm = currentMonth === 0 ? 11 : currentMonth - 1;
+            const py = currentMonth === 0 ? currentYear - 1 : currentYear;
+            return dateStr(py, pm, daysInMonth(py, pm));
+          };
+          const prevDs = getPrevDs(d);
+          const prevCell = shifts[emp.id]?.[prevDs];
+          const prevType = prevCell?.type || '';
+
+          // Find matching shift type label for dynamic naming
+          const findLabel = (id) => shiftTypes.find(s => s.id === id)?.label || id;
+
+          if (prevType) {
+            // KRITISCH: Nachtdienst → Frühdienst/Zwischendienst selber Morgen (0-2h Pause)
+            const criticalPrev = ['ND'];
+            const criticalCurr = ['FD', 'ZD', 'LT'];
+            // VERLETZUNG: Spätdienst/Spätteam → Frühdienst/Zwischendienst (7-10h Pause)
+            const highPrev = ['SD', 'ST'];
+            const highCurr  = ['FD', 'ZD', 'LT'];
+            // GRENZWERTIG: Zwischendienst/Leitungstag → Frühdienst (11-12h Pause)
+            const borderPrev = ['ZD', 'LT'];
+            const borderCurr = ['FD'];
+            // Dynamic: also catch any shift with "FT" or "FB" or "FO" in ID (Fortbildung etc.)
+            const isFortbildung = (id) => /^(FT|FB|FO|FBT|FORT)/i.test(id);
+
+            let severity = null;
+            if (criticalPrev.includes(prevType) && (criticalCurr.includes(cell.type) || isFortbildung(cell.type))) {
+              severity = 'critical';
+            } else if (highPrev.includes(prevType) && (highCurr.includes(cell.type) || isFortbildung(cell.type))) {
+              severity = 'high';
+            } else if ((borderPrev.includes(prevType) || isFortbildung(prevType)) && borderCurr.includes(cell.type)) {
+              severity = 'border';
+            } else if (isFortbildung(prevType) && criticalCurr.includes(cell.type)) {
+              severity = 'high';
             }
-            const prevCell = shifts[emp.id]?.[prevDs];
-            if (prevCell?.type === 'ND') {
-              restBadge = `<div class="rest-violation-badge" title="⚠️ Ruhezeitverletzung: ND dann FD – weniger als 11h Ruhezeit! (ArbZG §5)">⚡11h</div>`;
+
+            if (severity) {
+              const icon = severity === 'critical' ? '⚡' : severity === 'high' ? '⚠️' : '⚡';
+              const label = severity === 'critical' ? '0h!' : severity === 'high' ? '⚡11h' : '~11h';
+              const hours = severity === 'critical' ? '0–2' : severity === 'high' ? '7–10' : '11–12';
+              restBadge = `<div class="rest-violation-badge ${severity}" title="${icon} Ruhezeitverletzung: ${findLabel(prevType)}→${findLabel(cell.type)} – nur ~${hours}h Ruhezeit (ArbZG §5 mind. 11h)">${label}</div>`;
             }
           }
 
@@ -2650,12 +2734,11 @@ function setZoom(val) {
 
 function applyZoom() {
   const t = document.getElementById('plan-table');
-  const w = document.getElementById('plan-wrapper');
-  t.style.transform = `scale(${currentZoom})`;
-  t.style.transformOrigin = 'top left';
-  w.style.width = `${Math.round(currentZoom * 100)}%`;
-  // Inject zoom as CSS var so warn-row elements scale proportionally
+  // Use CSS `zoom` instead of transform:scale — zoom does NOT break position:sticky
+  t.style.zoom = currentZoom;
+  // Update CSS var used for warn-dot and other calc() expressions
   document.documentElement.style.setProperty('--table-zoom', currentZoom);
+  // No need to adjust wrapper width — zoom shrinks/expands layout naturally
 }
 
 function adjustZoom(delta) {

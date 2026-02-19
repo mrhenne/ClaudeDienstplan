@@ -996,122 +996,6 @@ body::before {
 }
 .employee-cell:hover .emp-fill-hint { opacity: 1; }
 
-/* ==========================================
-   WUNSCH / SPERR – LAYER
-   ========================================== */
-.wish-overlay {
-  position: absolute;
-  top: 3px; right: 3px;
-  width: calc(10px / var(--table-zoom));
-  height: calc(10px / var(--table-zoom));
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 4;
-  transition: transform 0.15s;
-  font-size: calc(9px / var(--table-zoom));
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 900;
-  line-height: 1;
-}
-.wish-overlay.wish {
-  background: rgba(22,163,74,0.25);
-  border: 1.5px solid rgba(22,163,74,0.7);
-  color: #16a34a;
-  box-shadow: 0 0 4px rgba(22,163,74,0.4);
-}
-.wish-overlay.block {
-  background: rgba(220,38,38,0.2);
-  border: 1.5px solid rgba(220,38,38,0.65);
-  color: #dc2626;
-  box-shadow: 0 0 4px rgba(220,38,38,0.35);
-}
-/* Conflict: wish was ignored (shift assigned on blocked day) */
-.day-cell.wish-conflict { outline: 2px solid rgba(239,68,68,0.7) !important; outline-offset: -2px; }
-
-/* Wish-mode is active: tint cells to hint */
-body.wish-mode-on .day-cell { cursor: crosshair !important; }
-body.wish-mode-on #wish-mode-btn { background: rgba(22,163,74,0.25) !important; color: #4ade80 !important; border-color: rgba(22,163,74,0.5) !important; }
-
-/* Coverage bars in header */
-.coverage-bars {
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 2px;
-  margin-top: 3px;
-  height: calc(14px / var(--table-zoom));
-}
-.cov-seg {
-  width: calc(11px / var(--table-zoom));
-  border-radius: calc(2px / var(--table-zoom));
-  min-height: calc(2px / var(--table-zoom));
-  transition: height 0.2s;
-  cursor: default;
-}
-
-/* Keyboard nav focused cell */
-.day-cell.kbnav-focus {
-  outline: 2.5px solid var(--accent) !important;
-  outline-offset: -2px;
-  z-index: 5;
-}
-
-/* Employee filter bar */
-#emp-filter-bar {
-  display: none;
-  padding: 6px 14px 0;
-  gap: 8px;
-  align-items: center;
-}
-#emp-filter-bar.visible { display: flex; }
-#emp-filter-input {
-  flex: 1;
-  max-width: 280px;
-  padding: 5px 10px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--glass2);
-  backdrop-filter: var(--blur-sm);
-  color: var(--text);
-  font-size: 12px;
-  font-family: 'DM Sans', sans-serif;
-  outline: none;
-  transition: border-color var(--transition);
-}
-#emp-filter-input:focus { border-color: var(--accent); }
-#emp-filter-input::placeholder { color: var(--text3); }
-.filter-badge-count {
-  font-size: 11px;
-  color: var(--text3);
-  white-space: nowrap;
-}
-.emp-row.filter-hidden { display: none !important; }
-
-/* CSV export button */
-.csv-btn {
-  padding: 6px 12px;
-  border-radius: 9px;
-  border: 1px solid var(--header-border);
-  background: rgba(16,185,129,0.15);
-  color: #6ee7b7;
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: 'DM Sans', sans-serif;
-  letter-spacing: 0.3px;
-  transition: all var(--transition);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-.csv-btn:hover { background: rgba(16,185,129,0.28); color: #a7f3d0; transform: translateY(-1px); }
-
-/* Clipboard flash animation */
-@keyframes pasteFlash {
-  0%   { background: rgba(59,91,255,0.35) !important; }
-  100% { background: transparent; }
-}
-.paste-flash { animation: pasteFlash 0.45s ease-out forwards; }
-
 /* Footer rows */
 .footer-row td {
   background: var(--glass2);
@@ -1778,8 +1662,6 @@ body.wish-mode-on #wish-mode-btn { background: rgba(22,163,74,0.25) !important; 
 <!-- CONTEXT MENU (day cells) -->
 <div id="context-menu">
   <div class="ctx-item" id="ctx-note">✏️ Notiz bearbeiten</div>
-  <div class="ctx-item" id="ctx-copy">📋 Dienst kopieren <span style="float:right;opacity:0.45;font-size:10px">Ctrl+C</span></div>
-  <div class="ctx-item" id="ctx-paste" style="opacity:0.4">📌 Dienst einfügen <span style="float:right;opacity:0.45;font-size:10px">Ctrl+V</span></div>
   <div class="ctx-item" id="ctx-swap">🔄 Zum Tauschen ausschreiben</div>
   <div class="ctx-divider"></div>
   <div class="ctx-item" id="ctx-clear" style="color:#ef4444">🗑️ Dienst löschen</div>
@@ -1853,8 +1735,6 @@ body.wish-mode-on #wish-mode-btn { background: rgba(22,163,74,0.25) !important; 
 
   <button class="header-btn" id="lock-btn" onclick="toggleLock()" title="Edit-Modus sperren/entsperren">🔓</button>
   <button class="header-btn" id="pan-btn" onclick="togglePanMode()" title="Drag-to-Pan ein/aus (P)">✋</button>
-  <button class="header-btn" id="wish-mode-btn" onclick="toggleWishMode()" title="Wunsch/Sperr-Modus (W)&#10;Linksklick: Wunsch ✓  Rechtsklick: Sperrtag ✗">🗓</button>
-  <button class="header-btn" id="filter-btn" onclick="toggleFilterBar()" title="Mitarbeiter filtern (F)">🔍</button>
   <button class="header-btn" id="copy-month-btn" onclick="openCopyMonthModal()" title="Vormonat als Vorlage kopieren">📋</button>
   <button class="header-btn" onclick="openModal('modal-employees')" title="Mitarbeiter verwalten">👥</button>
   <button class="header-btn" onclick="openModal('modal-shifts')" title="Dienste konfigurieren">⚙️</button>
@@ -1862,8 +1742,7 @@ body.wish-mode-on #wish-mode-btn { background: rgba(22,163,74,0.25) !important; 
   <button class="header-btn" onclick="openStatsModal()" title="Monatsstatistik">📊</button>
   <button class="header-btn" id="theme-btn" onclick="toggleTheme()" title="Dark/Light Mode">🌙</button>
 
-  <button class="export-btn" onclick="printPDF()">📄 PDF</button>
-  <button class="csv-btn" onclick="exportCSV()" title="Monatsplan als CSV exportieren (Excel-kompatibel)">⬇ CSV</button>
+  <button class="export-btn" onclick="printPDF()">📄 Export</button>
   <button class="save-btn" onclick="saveAll()">💾 Sichern</button>
 </div>
 
@@ -1879,12 +1758,6 @@ body.wish-mode-on #wish-mode-btn { background: rgba(22,163,74,0.25) !important; 
 
   <!-- TABLE AREA -->
   <div id="table-container">
-    <!-- Filter bar -->
-    <div id="emp-filter-bar">
-      <input id="emp-filter-input" type="text" placeholder="🔍 Mitarbeiter suchen…" oninput="applyEmpFilter(this.value)" autocomplete="off">
-      <span class="filter-badge-count" id="filter-count"></span>
-      <button style="margin-left:4px;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--glass2);color:var(--text2);font-size:11px;cursor:pointer" onclick="applyEmpFilter('');document.getElementById('emp-filter-input').value=''">✕ Löschen</button>
-    </div>
     <!-- Focus-mode Banner -->
     <div class="focus-banner" id="focus-banner">
       <span>👁️ Fokus: <strong id="focus-emp-name">—</strong></span>
@@ -2071,19 +1944,6 @@ let selectedShift = 'FD';
 let contextTarget = null; // {empId, dateStr}
 let focusEmpId    = null; // currently focused employee (highlight mode)
 let panModeActive = false; // drag-to-pan toggle
-
-// Wunsch/Sperr-Ebene
-let wishes    = {}; // { empId: { ds: 'wish'|'block' } } – persistent
-let wishMode  = false; // toggle
-
-// Zellen-Zwischenablage
-let cellClipboard = null; // { type, note }
-
-// Tastatur-Navigation
-let navCell = null; // { empId, ds } – currently keyboard-focused cell
-
-// Mitarbeiter-Filter
-let empFilter = ''; // text filter
 
 // =============================================================================
 // UNDO / REDO
@@ -2375,11 +2235,10 @@ function renderTable() {
   const tbody = document.getElementById('plan-tbody');
   const tfoot = document.getElementById('plan-tfoot');
 
-  // --- Pre-compute per-day counts for warnings + coverage bars ---
+  // --- Pre-compute per-day counts for FD / SD / ND (for warnings) ---
   const WARN_SHIFTS = ['FD', 'SD', 'ND'];
   const MIN_STAFF = 2;
   const dayCounts = {}; // dayCounts[ds][shiftId] = count
-  const maxDayCount = employees.length; // for scaling bars
   days.forEach(d => {
     const ds = dateStr(currentYear, currentMonth, d);
     dayCounts[ds] = {};
@@ -2437,7 +2296,6 @@ function renderTable() {
     thHTML += `<th class="${cls}"><div class="th-inner">
       <div class="th-day-num">${d}</div>
       <div class="th-day-name">${dayName}</div>
-      ${buildCoverageBars(ds, maxDayCount)}
       ${warnHTML}
     </div></th>`;
   });
@@ -2590,21 +2448,11 @@ function renderTable() {
         }
       }
 
-      // Wish/Block overlay
-      const empWish = wishes[emp.id]?.[ds];
-      const wishOverlay = empWish
-        ? `<div class="wish-overlay ${empWish}" title="${empWish==='wish'?'✓ Wunschdienst':'✗ Sperrtag'}">${empWish==='wish'?'✓':'✗'}</div>`
-        : '';
-      // Conflict: shift assigned on a blocked day
-      const wishConflict = empWish === 'block' && hasShift ? ' wish-conflict' : '';
-
-      tbHTML += `<td class="${cls}${hasNote?' has-note':''}${(!hasShift&&hasNote)?' note-only-cell':''}${wishConflict}"
-        data-ds="${ds}"
-        onclick="wishMode ? handleWishClick(event,'${emp.id}','${ds}') : handleCellClick(event,'${emp.id}','${ds}')"
-        ondblclick="event.stopPropagation();wishMode ? null : openNotePopup('${emp.id}','${ds}')"
-        oncontextmenu="wishMode ? handleWishClick(event,'${emp.id}','${ds}') : handleContextMenu(event,'${emp.id}','${ds}')"
-        onmousedown="if(!wishMode && !panModeActive) { navCell=null; requestAnimationFrame(()=>setNavCell('${emp.id}','${ds}')); }"
-        >${inner}${wishOverlay}</td>`;
+      tbHTML += `<td class="${cls}${hasNote?' has-note':''}${(!hasShift&&hasNote)?' note-only-cell':''}"
+        onclick="handleCellClick(event,'${emp.id}','${ds}')"
+        ondblclick="event.stopPropagation();openNotePopup('${emp.id}','${ds}')"
+        oncontextmenu="handleContextMenu(event,'${emp.id}','${ds}')"
+        >${inner}</td>`;
     });
 
     tbHTML += '</tr>';
@@ -2612,13 +2460,6 @@ function renderTable() {
   tbody.innerHTML = tbHTML;
   // Re-apply focus highlight after DOM rebuild
   if (focusEmpId) applyFocusMode();
-  // Re-apply keyboard nav highlight
-  if (navCell) {
-    const td = document.querySelector(`tr[data-empid="${navCell.empId}"] td[data-ds="${navCell.ds}"]`);
-    if (td) td.classList.add('kbnav-focus');
-  }
-  // Re-apply employee filter
-  if (empFilter) applyEmpFilter(empFilter);
 
   // --- TFOOT ---
   const footShifts = shiftTypes.filter(st => settings.footerShifts[st.id] !== false);
@@ -3480,7 +3321,7 @@ function escapeHTML(str) {
 const LS_KEY = 'dienstplan-pro-data';
 
 function getState() {
-  return { employees, shifts, shiftTypes, settings, darkMode, currentYear, currentMonth, currentZoom, wishes };
+  return { employees, shifts, shiftTypes, settings, darkMode, currentYear, currentMonth, currentZoom };
 }
 
 function saveLocal() {
@@ -3498,7 +3339,6 @@ function loadLocal() {
     if (d.shifts)    shifts    = d.shifts;
     if (d.shiftTypes) shiftTypes = d.shiftTypes;
     if (d.settings)  settings  = { ...settings, ...d.settings };
-    if (d.wishes)    wishes    = d.wishes;
     if (d.darkMode !== undefined) {
       darkMode = d.darkMode;
       document.body.dataset.theme = darkMode ? 'dark' : 'light';
@@ -3601,66 +3441,20 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 
 // Keyboard shortcuts
 document.addEventListener('keydown', e => {
-  const inInput = e.target.matches('input,textarea,select');
   if (e.key === 'Escape') {
     document.querySelectorAll('.modal-overlay.visible').forEach(m => m.classList.remove('visible'));
     document.getElementById('note-popup').classList.remove('visible');
     document.getElementById('context-menu').classList.remove('visible');
     document.getElementById('emp-context-menu').classList.remove('visible');
     if (focusEmpId) clearFocusMode();
-    if (navCell) { navCell = null; document.querySelectorAll('.kbnav-focus').forEach(el => el.classList.remove('kbnav-focus')); }
-    if (wishMode) toggleWishMode();
   }
   if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveAll(); }
   if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undoAction(); }
   if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || e.key === 'Y')) { e.preventDefault(); redoAction(); }
-
-  // Clipboard Ctrl+C / Ctrl+V
-  if ((e.ctrlKey || e.metaKey) && e.key === 'c' && navCell && !inInput) {
-    e.preventDefault();
-    copyCell(navCell.empId, navCell.ds);
+  if (e.key === 'p' || e.key === 'P') {
+    // Only if not typing in an input
+    if (!e.target.matches('input,textarea,select')) togglePanMode();
   }
-  if ((e.ctrlKey || e.metaKey) && e.key === 'v' && navCell && !inInput) {
-    e.preventDefault();
-    pasteCell(navCell.empId, navCell.ds);
-  }
-
-  // Keyboard navigation (arrow keys in table)
-  if (!inInput && navCell && ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)) {
-    e.preventDefault();
-    moveNavCell(e.key);
-  }
-
-  // Space = place selected shift on navCell
-  if (!inInput && e.key === ' ' && navCell) {
-    e.preventDefault();
-    if (!editLocked && !wishMode) {
-      pushHistory();
-      if (!shifts[navCell.empId]) shifts[navCell.empId] = {};
-      const cur = shifts[navCell.empId][navCell.ds];
-      if (cur?.type === selectedShift) {
-        if (cur.note?.trim()) shifts[navCell.empId][navCell.ds].type = '';
-        else delete shifts[navCell.empId][navCell.ds];
-      } else {
-        shifts[navCell.empId][navCell.ds] = { type: selectedShift, note: cur?.note||'', swap: cur?.swap||false };
-      }
-      renderTable(); saveLocal();
-    }
-  }
-
-  // Delete key = clear navCell
-  if (!inInput && (e.key === 'Delete' || e.key === 'Backspace') && navCell) {
-    e.preventDefault();
-    if (!editLocked) {
-      pushHistory();
-      if (shifts[navCell.empId]) delete shifts[navCell.empId][navCell.ds];
-      renderTable(); saveLocal();
-    }
-  }
-
-  if (!inInput && (e.key === 'p' || e.key === 'P')) togglePanMode();
-  if (!inInput && (e.key === 'w' || e.key === 'W')) toggleWishMode();
-  if (!inInput && (e.key === 'f' || e.key === 'F')) toggleFilterBar();
 });
 
 // =============================================================================
@@ -3802,233 +3596,6 @@ function executeCopyMonth() {
   closeModal('modal-copy-month');
   renderTable(); saveLocal();
   showToast(`📋 ${copied} Dienste aus ${MONTHS_DE[srcM]} ${srcY} kopiert`);
-}
-
-// =============================================================================
-// WUNSCH / SPERR – LAYER
-// =============================================================================
-function toggleWishMode() {
-  wishMode = !wishMode;
-  document.body.classList.toggle('wish-mode-on', wishMode);
-  document.getElementById('wish-mode-btn').classList.toggle('active', wishMode);
-  showToast(wishMode
-    ? '🗓 Wunschmodus aktiv – Linksklick: Wunsch ✓  Rechtsklick: Sperrtag ✗  ESC: beenden'
-    : '🗓 Wunschmodus deaktiviert');
-}
-
-function handleWishClick(e, empId, ds) {
-  if (!wishMode) return false;
-  e.preventDefault(); e.stopPropagation();
-  if (!wishes[empId]) wishes[empId] = {};
-  if (e.type === 'contextmenu' || e.button === 2) {
-    // Toggle block
-    if (wishes[empId][ds] === 'block') delete wishes[empId][ds];
-    else wishes[empId][ds] = 'block';
-  } else {
-    // Toggle wish
-    if (wishes[empId][ds] === 'wish') delete wishes[empId][ds];
-    else wishes[empId][ds] = 'wish';
-  }
-  saveWishes();
-  renderTable();
-  return true;
-}
-
-function saveWishes() {
-  try { localStorage.setItem('dienstplan-wishes', JSON.stringify(wishes)); } catch(e) {}
-}
-function loadWishes() {
-  try {
-    const raw = localStorage.getItem('dienstplan-wishes');
-    if (raw) wishes = JSON.parse(raw);
-  } catch(e) {}
-}
-
-// =============================================================================
-// COVERAGE BARS (Besetzungsbalken)
-// =============================================================================
-function buildCoverageBars(ds, maxCount) {
-  // Show bars for the 3 key shifts: FD (blue), SD (amber), ND (purple)
-  // Height proportional to count, max = maxCount employees
-  const BAR_SHIFTS = [
-    { id: 'FD', color: '#60a5fa' },
-    { id: 'SD', color: '#fb923c' },
-    { id: 'ND', color: '#a78bfa' },
-  ];
-  const counts = BAR_SHIFTS.map(b => ({
-    ...b,
-    count: employees.filter(emp => shifts[emp.id]?.[ds]?.type === b.id).length
-  }));
-  const max = Math.max(maxCount, 1);
-  return `<div class="coverage-bars">${
-    counts.map(b => {
-      const h = Math.max(2, Math.round((b.count / max) * 14));
-      const isLow = b.count < 2;
-      return `<div class="cov-seg" style="height:${h}px;background:${isLow&&b.count>0?'#f59e0b':isLow?'#ef4444':b.color};opacity:${b.count===0?0.18:0.85}" title="${b.id}: ${b.count}"></div>`;
-    }).join('')
-  }</div>`;
-}
-
-// =============================================================================
-// CELL CLIPBOARD
-// =============================================================================
-function copyCell(empId, ds) {
-  const cell = shifts[empId]?.[ds];
-  if (!cell?.type) { showToast('📋 Kein Dienst zum Kopieren'); return; }
-  cellClipboard = { type: cell.type, note: cell.note || '' };
-  const st = shiftTypes.find(s => s.id === cell.type);
-  showToast(`📋 Kopiert: ${st?.label || cell.type}`);
-  // Update paste button state
-  updateContextPasteState();
-}
-
-function pasteCell(empId, ds) {
-  if (!cellClipboard) { showToast('📌 Nichts in Zwischenablage'); return; }
-  if (editLocked) return;
-  pushHistory();
-  if (!shifts[empId]) shifts[empId] = {};
-  shifts[empId][ds] = { type: cellClipboard.type, note: cellClipboard.note, swap: false };
-  renderTable(); saveLocal();
-  // Flash the pasted cell
-  requestAnimationFrame(() => {
-    const td = document.querySelector(`tr[data-empid="${empId}"] td[data-ds="${ds}"]`);
-    if (td) { td.classList.add('paste-flash'); td.addEventListener('animationend', () => td.classList.remove('paste-flash'), {once:true}); }
-  });
-}
-
-function updateContextPasteState() {
-  const el = document.getElementById('ctx-paste');
-  if (el) el.style.opacity = cellClipboard ? '1' : '0.4';
-}
-
-// Wire up copy/paste context menu items
-document.getElementById('ctx-copy').onclick = () => {
-  if (contextTarget) copyCell(contextTarget.empId, contextTarget.ds);
-  document.getElementById('context-menu').classList.remove('visible');
-};
-document.getElementById('ctx-paste').onclick = () => {
-  if (contextTarget && cellClipboard) pasteCell(contextTarget.empId, contextTarget.ds);
-  document.getElementById('context-menu').classList.remove('visible');
-};
-
-// =============================================================================
-// KEYBOARD NAVIGATION
-// =============================================================================
-function setNavCell(empId, ds) {
-  document.querySelectorAll('.kbnav-focus').forEach(el => el.classList.remove('kbnav-focus'));
-  navCell = { empId, ds };
-  const td = document.querySelector(`tr[data-empid="${empId}"] td[data-ds="${ds}"]`);
-  if (td) { td.classList.add('kbnav-focus'); td.focus(); }
-}
-
-function moveNavCell(key) {
-  if (!navCell) return;
-  const days = getVisibleDays();
-  const empIds = employees.map(e => e.id).filter(id => {
-    const row = document.querySelector(`tr[data-empid="${id}"]`);
-    return row && !row.classList.contains('filter-hidden');
-  });
-  const curDayIdx = days.findIndex(d => dateStr(currentYear, currentMonth, d) === navCell.ds);
-  const curEmpIdx = empIds.indexOf(navCell.empId);
-  let newDay = curDayIdx, newEmp = curEmpIdx;
-  if (key === 'ArrowRight') newDay = Math.min(curDayIdx + 1, days.length - 1);
-  if (key === 'ArrowLeft')  newDay = Math.max(curDayIdx - 1, 0);
-  if (key === 'ArrowDown')  newEmp = Math.min(curEmpIdx + 1, empIds.length - 1);
-  if (key === 'ArrowUp')    newEmp = Math.max(curEmpIdx - 1, 0);
-  setNavCell(empIds[newEmp], dateStr(currentYear, currentMonth, days[newDay]));
-}
-
-// =============================================================================
-// EMPLOYEE FILTER
-// =============================================================================
-function toggleFilterBar() {
-  const bar = document.getElementById('emp-filter-bar');
-  const isNow = bar.classList.toggle('visible');
-  document.getElementById('filter-btn').classList.toggle('active', isNow);
-  if (isNow) setTimeout(() => document.getElementById('emp-filter-input').focus(), 50);
-  else { applyEmpFilter(''); document.getElementById('emp-filter-input').value = ''; }
-}
-
-function applyEmpFilter(text) {
-  empFilter = text.trim().toLowerCase();
-  let visible = 0, total = employees.length;
-  employees.forEach(emp => {
-    const row = document.querySelector(`tr[data-empid="${emp.id}"]`);
-    if (!row) return;
-    const match = !empFilter ||
-      emp.name.toLowerCase().includes(empFilter) ||
-      (emp.role || '').toLowerCase().includes(empFilter);
-    row.classList.toggle('filter-hidden', !match);
-    if (match) visible++;
-  });
-  const cnt = document.getElementById('filter-count');
-  if (cnt) cnt.textContent = empFilter ? `${visible} von ${total}` : '';
-}
-
-// =============================================================================
-// CSV EXPORT
-// =============================================================================
-function exportCSV() {
-  const holidays = getNRWHolidays(currentYear);
-  const days = Array.from({length: daysInMonth(currentYear, currentMonth)}, (_, i) => i + 1);
-  const DAYS_SHORT = ['So','Mo','Di','Mi','Do','Fr','Sa'];
-
-  // Header row
-  const headers = ['Mitarbeiter', 'Rolle', ...days.map(d => {
-    const dow = new Date(currentYear, currentMonth, d).getDay();
-    const ds  = dateStr(currentYear, currentMonth, d);
-    const isH = !!holidays[ds];
-    const isW = dow === 0 || dow === 6;
-    return `${d}.${DAYS_SHORT[dow]}${isH?'*':isW?'°':''}`;
-  }), 'Ist-h', 'Soll-h', 'Diff'];
-
-  const workdays = getWorkdays(currentYear, currentMonth);
-  const rows = employees.map(emp => {
-    const ist  = calcIst(emp.id, currentYear, currentMonth);
-    const soll = calcSoll(emp.vz, workdays, settings.hourFactor);
-    const diff = Math.round((ist - soll + (emp.vmt||0)) * 10) / 10;
-    const cells = days.map(d => {
-      const ds   = dateStr(currentYear, currentMonth, d);
-      const cell = shifts[emp.id]?.[ds];
-      if (!cell?.type) return '';
-      const note = cell.note ? ` (${cell.note})` : '';
-      const swap = cell.swap ? ' 🔄' : '';
-      return `${cell.type}${note}${swap}`;
-    });
-    return [emp.name, emp.role || '', ...cells,
-      String(ist).replace('.',','),
-      String(soll).replace('.',','),
-      (diff >= 0 ? '+' : '') + String(diff).replace('.',',')
-    ];
-  });
-
-  const monthName = MONTHS_DE[currentMonth];
-  // Summary rows
-  rows.push([]);
-  rows.push(['Legende:', '* = Feiertag', '° = Wochenende']);
-  const bestshifts = ['FD','SD','ND'];
-  bestshifts.forEach(sid => {
-    const st = shiftTypes.find(s => s.id === sid);
-    const counts = days.map(d => {
-      const ds = dateStr(currentYear, currentMonth, d);
-      return employees.filter(emp => shifts[emp.id]?.[ds]?.type === sid).length;
-    });
-    rows.push([st ? `${st.label} (${st.name})`, '', ...counts.map(String), '', '', '']);
-  });
-
-  const csvContent = [headers, ...rows]
-    .map(row => row.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(';'))
-    .join('\n');
-
-  const BOM = '\uFEFF'; // UTF-8 BOM for Excel
-  const blob = new Blob([BOM + csvContent], {type:'text/csv;charset=utf-8;'});
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href = url;
-  a.download = `Dienstplan_${monthName}_${currentYear}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast(`⬇ CSV exportiert: Dienstplan_${monthName}_${currentYear}.csv`);
 }
 
 init();

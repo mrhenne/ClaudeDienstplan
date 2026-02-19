@@ -1,0 +1,2178 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dienstplan PRO – Helios Duisburg</title>
+
+<!-- Firebase SDKs -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  // ============================================================
+  // 🔥 FIREBASE KONFIGURATION – HIER EIGENE DATEN EINTRAGEN!
+  // Erstelle ein Projekt auf https://console.firebase.google.com
+  // ============================================================
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+
+  let db = null;
+  let firebaseReady = false;
+
+  try {
+    if (firebaseConfig.apiKey !== "YOUR_API_KEY") {
+      const app = initializeApp(firebaseConfig);
+      db = getFirestore(app);
+      firebaseReady = true;
+      console.log("Firebase connected");
+    }
+  } catch(e) {
+    console.warn("Firebase not configured, using localStorage only", e);
+  }
+
+  window.__firebaseDB = db;
+  window.__firebaseReady = firebaseReady;
+  window.__firestoreAPI = { doc, setDoc, getDoc, onSnapshot };
+
+  // Signal app that Firebase is ready
+  window.dispatchEvent(new Event('firebaseReady'));
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+/* ==========================================
+   CSS VARIABLES & RESET
+   ========================================== */
+:root {
+  --bg: #f0f2f7;
+  --surface: #ffffff;
+  --surface2: #f8f9fc;
+  --border: #e2e6ef;
+  --text: #1a1d2e;
+  --text2: #5a6080;
+  --text3: #9099b5;
+  --accent: #2563eb;
+  --accent-light: #dbeafe;
+  --header-bg: #1a1d2e;
+  --header-text: #ffffff;
+  --sidebar-bg: #1a1d2e;
+  --weekend: #fff8ed;
+  --holiday: #fff0f0;
+  --today: #eff6ff;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+  --radius: 8px;
+  --radius-sm: 5px;
+  --transition: 0.15s ease;
+
+  /* Shift colors */
+  --fd: #0ea5e9;
+  --fd-bg: #e0f2fe;
+  --sd: #d946ef;
+  --sd-bg: #fce7ff;
+  --nd: #f97316;
+  --nd-bg: #ffedd5;
+  --zd: #7c3aed;
+  --zd-bg: #ede9fe;
+  --st: #2563eb;
+  --st-bg: #dbeafe;
+  --u: #eab308;
+  --u-bg: #fef9c3;
+  --k: #ef4444;
+  --k-bg: #fee2e2;
+  --lt: #10b981;
+  --lt-bg: #d1fae5;
+  --x: #94a3b8;
+  --x-bg: #f1f5f9;
+}
+
+[data-theme="dark"] {
+  --bg: #0f1117;
+  --surface: #1a1d2e;
+  --surface2: #222536;
+  --border: #2d3149;
+  --text: #e8eaf6;
+  --text2: #9099b5;
+  --text3: #5a6080;
+  --accent: #3b82f6;
+  --accent-light: #1e3a5f;
+  --header-bg: #0a0c14;
+  --sidebar-bg: #0a0c14;
+  --weekend: #1e1a0e;
+  --holiday: #1e1010;
+  --today: #0e1a2e;
+  --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.2);
+  --fd-bg: #0c3f56;
+  --sd-bg: #3d1045;
+  --nd-bg: #431a08;
+  --zd-bg: #2d1a5c;
+  --st-bg: #1e3a6e;
+  --u-bg: #3d3300;
+  --k-bg: #3d0a0a;
+  --lt-bg: #053d22;
+  --x-bg: #1e2433;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { height: 100%; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* ==========================================
+   SCROLLBAR
+   ========================================== */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+/* ==========================================
+   HEADER
+   ========================================== */
+#header {
+  background: var(--header-bg);
+  color: var(--header-text);
+  padding: 0 16px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.logo-icon {
+  width: 32px; height: 32px;
+  background: var(--accent);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+.logo-text { line-height: 1.2; }
+.logo-title { font-weight: 700; font-size: 14px; letter-spacing: 0.3px; }
+.logo-sub { font-size: 10px; color: #8892b0; text-transform: uppercase; letter-spacing: 1px; }
+
+.header-divider { width: 1px; height: 28px; background: rgba(255,255,255,0.1); flex-shrink: 0; }
+
+.view-toggle {
+  display: flex;
+  background: rgba(255,255,255,0.1);
+  border-radius: 6px;
+  padding: 2px;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.view-btn {
+  padding: 5px 14px;
+  border: none;
+  background: transparent;
+  color: rgba(255,255,255,0.6);
+  cursor: pointer;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  transition: all var(--transition);
+}
+.view-btn.active {
+  background: var(--accent);
+  color: white;
+}
+
+.month-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.month-nav button {
+  width: 28px; height: 28px;
+  border: none;
+  background: rgba(255,255,255,0.1);
+  color: white;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background var(--transition);
+}
+.month-nav button:hover { background: rgba(255,255,255,0.2); }
+.month-label {
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 1px;
+  min-width: 130px;
+  text-align: center;
+  font-family: 'Space Mono', monospace;
+}
+
+.zoom-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.zoom-control button {
+  width: 24px; height: 24px;
+  border: none;
+  background: rgba(255,255,255,0.1);
+  color: white;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background var(--transition);
+}
+.zoom-control button:hover { background: rgba(255,255,255,0.2); }
+.zoom-slider {
+  -webkit-appearance: none;
+  width: 80px; height: 3px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.2);
+  outline: none;
+  cursor: pointer;
+}
+.zoom-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+}
+.zoom-label {
+  font-size: 11px;
+  color: rgba(255,255,255,0.5);
+  font-family: 'Space Mono', monospace;
+  min-width: 35px;
+}
+
+.workdays-badge {
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  flex-shrink: 0;
+}
+
+.header-spacer { flex: 1; }
+
+.sync-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+.sync-badge.online { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
+.sync-badge.offline { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+.sync-dot { width: 6px; height: 6px; border-radius: 50%; }
+.sync-badge.online .sync-dot { background: #10b981; animation: pulse 2s infinite; }
+.sync-badge.offline .sync-dot { background: #ef4444; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+.header-btn {
+  width: 32px; height: 32px;
+  border: none;
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.8);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition);
+  flex-shrink: 0;
+  position: relative;
+}
+.header-btn:hover { background: rgba(255,255,255,0.2); }
+.header-btn.active { background: var(--accent); color: white; }
+.header-btn.locked { background: rgba(239, 68, 68, 0.3); color: #fca5a5; }
+
+.export-btn, .save-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all var(--transition);
+  flex-shrink: 0;
+}
+.export-btn { background: rgba(255,255,255,0.1); color: white; }
+.export-btn:hover { background: rgba(255,255,255,0.2); }
+.save-btn { background: var(--accent); color: white; }
+.save-btn:hover { background: #1d4ed8; }
+
+/* ==========================================
+   MAIN LAYOUT
+   ========================================== */
+#main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ==========================================
+   SIDEBAR
+   ========================================== */
+#sidebar {
+  width: 68px;
+  background: var(--sidebar-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 0;
+  gap: 6px;
+  overflow-y: auto;
+  flex-shrink: 0;
+  border-right: 1px solid rgba(255,255,255,0.05);
+  transition: width 0.3s;
+}
+
+.sidebar-shift-btn {
+  width: 44px; height: 40px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 12px;
+  font-family: 'Space Mono', monospace;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  transition: all var(--transition);
+  position: relative;
+  letter-spacing: 0.3px;
+}
+.sidebar-shift-btn:hover { transform: scale(1.08); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+.sidebar-shift-btn.selected { box-shadow: 0 0 0 2px white, 0 4px 12px rgba(0,0,0,0.3); }
+.sidebar-shift-btn span { font-size: 8px; font-weight: 400; font-family: 'DM Sans', sans-serif; opacity: 0.7; }
+
+.sidebar-divider { width: 32px; height: 1px; background: rgba(255,255,255,0.1); margin: 4px 0; }
+
+/* ==========================================
+   TABLE CONTAINER
+   ========================================== */
+#table-container {
+  flex: 1;
+  overflow: auto;
+  padding: 12px;
+  background: var(--bg);
+}
+
+#plan-wrapper {
+  background: var(--surface);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  min-width: fit-content;
+}
+
+/* ==========================================
+   TABLE
+   ========================================== */
+#plan-table {
+  border-collapse: collapse;
+  font-size: 12px;
+  width: 100%;
+  transform-origin: top left;
+  transition: transform 0.1s;
+}
+
+/* Header row */
+#plan-table thead th {
+  background: var(--header-bg);
+  color: rgba(255,255,255,0.85);
+  padding: 0;
+  white-space: nowrap;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  border: none;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.th-inner {
+  padding: 8px 6px;
+  border-right: 1px solid rgba(255,255,255,0.07);
+  height: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.th-employee { min-width: 150px; align-items: flex-start !important; padding-left: 12px !important; }
+.col-stat { min-width: 38px; font-size: 11px; font-family: 'Space Mono', monospace; }
+
+.th-day-num {
+  font-size: 15px;
+  font-weight: 700;
+  font-family: 'Space Mono', monospace;
+  line-height: 1;
+}
+.th-day-name {
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+.th-weekend { background: #16192a !important; }
+.th-holiday { background: #1a1010 !important; }
+.th-today { background: #0d2040 !important; }
+
+/* Cells */
+#plan-table td {
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0;
+  vertical-align: top;
+}
+
+.employee-cell {
+  min-width: 150px;
+  padding: 6px 10px 6px 12px;
+  cursor: pointer;
+  background: var(--surface);
+  position: sticky;
+  left: 0;
+  z-index: 5;
+}
+.employee-cell:hover { background: var(--surface2); }
+.emp-name { font-weight: 600; font-size: 12px; color: var(--text); }
+.emp-role { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; }
+
+.stat-cell {
+  text-align: center;
+  vertical-align: middle;
+  padding: 6px 4px;
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  background: var(--surface2);
+  position: sticky;
+  z-index: 4;
+}
+.stat-cell.negative { color: #ef4444; }
+.stat-cell.positive { color: #10b981; }
+.stat-vz { color: var(--accent); }
+
+.day-cell {
+  min-width: 46px;
+  width: 46px;
+  height: 52px;
+  text-align: center;
+  vertical-align: top;
+  cursor: pointer;
+  transition: background var(--transition);
+  position: relative;
+}
+.day-cell:hover { background: var(--surface2); }
+.day-cell.weekend { background: var(--weekend); }
+.day-cell.holiday { background: var(--holiday); }
+.day-cell.today-col { background: var(--today); }
+
+.shift-badge {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 30px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 11px;
+  font-family: 'Space Mono', monospace;
+  margin-top: 5px;
+  letter-spacing: 0.3px;
+  line-height: 1;
+  transition: transform 0.1s;
+  cursor: pointer;
+}
+.shift-badge:hover { transform: scale(1.08); }
+.shift-badge .note-indicator {
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.3);
+  margin-top: 2px;
+}
+.shift-note-text {
+  font-size: 8px;
+  color: var(--text3);
+  text-align: center;
+  padding: 1px 2px 3px;
+  max-width: 44px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 400;
+}
+
+/* Footer rows */
+.footer-row td {
+  background: var(--surface2);
+  font-size: 11px;
+  text-align: center;
+  vertical-align: middle;
+  padding: 5px 4px;
+  border-top: 2px solid var(--border);
+  font-family: 'Space Mono', monospace;
+  font-weight: 600;
+}
+.footer-label {
+  text-align: left !important;
+  padding-left: 12px !important;
+  font-family: 'DM Sans', sans-serif !important;
+  font-size: 12px !important;
+  color: var(--text2);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.footer-count { color: var(--text); }
+.footer-count.zero { color: var(--text3); }
+
+/* ==========================================
+   MODALS
+   ========================================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.visible {
+  opacity: 1;
+  pointer-events: all;
+}
+.modal {
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 24px;
+  min-width: 360px;
+  max-width: 90vw;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+  transform: scale(0.95);
+  transition: transform 0.2s;
+}
+.modal-overlay.visible .modal { transform: scale(1); }
+.modal-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.modal-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--text3);
+  cursor: pointer;
+  font-size: 20px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color var(--transition);
+}
+.modal-close:hover { color: var(--text); }
+
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.form-row label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.form-row input, .form-row select, .form-row textarea {
+  padding: 8px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface2);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+  transition: border-color var(--transition);
+}
+.form-row input:focus, .form-row select:focus, .form-row textarea:focus {
+  border-color: var(--accent);
+}
+.form-row textarea { resize: vertical; min-height: 60px; }
+.form-row input[type="range"] {
+  padding: 4px 0;
+  border: none;
+  background: none;
+  -webkit-appearance: none;
+  width: 100%;
+}
+.form-row input[type="range"]::-webkit-slider-track {
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+}
+.form-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  margin-top: -6px;
+}
+
+.btn-row {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+.btn {
+  padding: 8px 18px;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all var(--transition);
+}
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover { background: #1d4ed8; }
+.btn-secondary { background: var(--surface2); color: var(--text2); border: 1.5px solid var(--border); }
+.btn-secondary:hover { background: var(--border); }
+.btn-danger { background: #fef2f2; color: #ef4444; border: 1.5px solid #fecaca; }
+.btn-danger:hover { background: #fee2e2; }
+
+/* Employee list in modal */
+.emp-list { display: flex; flex-direction: column; gap: 4px; }
+.emp-list-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.emp-list-item:hover { border-color: var(--accent); background: var(--accent-light); }
+.emp-list-item .drag-handle {
+  color: var(--text3);
+  cursor: grab;
+  font-size: 16px;
+}
+.emp-list-item .emp-info { flex: 1; }
+.emp-list-item .emp-info .name { font-weight: 600; font-size: 13px; }
+.emp-list-item .emp-info .role { font-size: 11px; color: var(--text3); }
+.emp-list-item .emp-actions { display: flex; gap: 4px; }
+.emp-list-item .icon-btn {
+  width: 26px; height: 26px;
+  border: none;
+  background: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text3);
+  transition: all var(--transition);
+}
+.emp-list-item .icon-btn:hover { background: var(--border); color: var(--text); }
+.icon-btn.danger:hover { background: #fee2e2; color: #ef4444; }
+
+/* Shift config */
+.shift-config-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  border: 1.5px solid var(--border);
+  margin-bottom: 6px;
+  background: var(--surface2);
+}
+.shift-preview {
+  width: 36px; height: 30px;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 11px;
+  font-family: 'Space Mono', monospace;
+  flex-shrink: 0;
+}
+.shift-config-inputs { flex: 1; display: flex; gap: 6px; }
+.shift-config-inputs input {
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 12px;
+  font-family: inherit;
+}
+.shift-config-inputs input.label-inp { width: 50px; }
+.shift-config-inputs input.name-inp { flex: 1; }
+.shift-config-inputs input.hours-inp { width: 50px; }
+.shift-config-inputs input.color-inp { width: 36px; height: 26px; padding: 2px; cursor: pointer; }
+
+/* Tooltip */
+.tooltip-box {
+  position: fixed;
+  background: var(--header-bg);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0;
+  transition: opacity 0.15s;
+  max-width: 200px;
+  box-shadow: var(--shadow-lg);
+}
+
+/* Note popup */
+.note-popup {
+  position: fixed;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  z-index: 2000;
+  box-shadow: var(--shadow-lg);
+  min-width: 200px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+.note-popup.visible { opacity: 1; pointer-events: all; }
+.note-popup textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-family: inherit;
+  font-size: 12px;
+  background: var(--surface2);
+  color: var(--text);
+  resize: none;
+  outline: none;
+}
+.note-popup .note-actions { display: flex; gap: 6px; margin-top: 8px; justify-content: flex-end; }
+.note-popup .note-actions button {
+  padding: 4px 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: inherit;
+}
+
+/* Drag & Drop feedback */
+.emp-row.drag-over td { background: var(--accent-light) !important; }
+.emp-row.dragging { opacity: 0.4; }
+
+/* ==========================================
+   COLUMN HEADERS STICKY
+   ========================================== */
+.stat-th {
+  position: sticky;
+  z-index: 11;
+}
+.emp-th { left: 0; z-index: 12 !important; }
+
+/* ==========================================
+   NOTIFICATION TOAST
+   ========================================== */
+#toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: #1a1d2e;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 9999;
+  transition: transform 0.3s, opacity 0.3s;
+  opacity: 0;
+  pointer-events: none;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+#toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+/* ==========================================
+   LOADING OVERLAY
+   ========================================== */
+#loading {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  transition: opacity 0.4s;
+}
+#loading.hidden { opacity: 0; pointer-events: none; }
+.spinner {
+  width: 40px; height: 40px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ==========================================
+   WEEK VIEW
+   ========================================== */
+#week-controls {
+  display: none;
+  align-items: center;
+  gap: 8px;
+}
+#week-controls.visible { display: flex; }
+.week-nav-btn {
+  padding: 4px 10px;
+  border: none;
+  background: rgba(255,255,255,0.1);
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  transition: background var(--transition);
+}
+.week-nav-btn:hover { background: rgba(255,255,255,0.2); }
+.week-label { font-size: 12px; color: rgba(255,255,255,0.7); min-width: 100px; text-align: center; }
+
+/* ==========================================
+   PRINT STYLES
+   ========================================== */
+@media print {
+  body { background: white; overflow: visible; display: block; }
+  #header, #sidebar, .modal-overlay, #loading, #toast { display: none !important; }
+  #main { display: block; overflow: visible; }
+  #table-container { overflow: visible; padding: 0; }
+  #plan-wrapper { box-shadow: none; border-radius: 0; overflow: visible; }
+  #plan-table { font-size: 9px !important; transform: none !important; }
+  #plan-table td, #plan-table th { padding: 2px 3px !important; }
+  .shift-badge { width: 28px !important; height: 22px !important; font-size: 9px !important; }
+  .day-cell { min-width: 32px !important; width: 32px !important; }
+  @page { size: A3 landscape; margin: 8mm; }
+}
+
+/* ==========================================
+   SETTINGS PANEL
+   ========================================== */
+.settings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--surface2);
+  border-radius: var(--radius);
+  border: 1.5px solid var(--border);
+}
+.toggle-label { font-size: 13px; font-weight: 500; color: var(--text); }
+.toggle-switch {
+  position: relative;
+  width: 36px; height: 20px;
+}
+.toggle-switch input { display: none; }
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 14px; height: 14px;
+  top: 3px; left: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+.toggle-switch input:checked + .toggle-slider { background: var(--accent); }
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(16px); }
+
+/* ==========================================
+   CONTEXT MENU
+   ========================================== */
+#context-menu {
+  position: fixed;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 6px;
+  z-index: 3000;
+  box-shadow: var(--shadow-lg);
+  display: none;
+  min-width: 180px;
+}
+#context-menu.visible { display: block; }
+.ctx-item {
+  padding: 7px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  transition: background var(--transition);
+}
+.ctx-item:hover { background: var(--surface2); }
+.ctx-item.danger { color: #ef4444; }
+.ctx-item.danger:hover { background: #fef2f2; }
+.ctx-divider { height: 1px; background: var(--border); margin: 4px 0; }
+</style>
+</head>
+
+<body data-theme="light">
+
+<!-- LOADING -->
+<div id="loading">
+  <div class="spinner"></div>
+  <div style="font-size:14px;color:var(--text2);font-weight:500;">Dienstplan wird geladen…</div>
+</div>
+
+<!-- TOAST -->
+<div id="toast">✓ Gespeichert</div>
+
+<!-- TOOLTIP -->
+<div class="tooltip-box" id="tooltip"></div>
+
+<!-- NOTE POPUP -->
+<div class="note-popup" id="note-popup">
+  <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Notiz</div>
+  <textarea id="note-textarea" rows="3" placeholder="Notiz eingeben…"></textarea>
+  <div class="note-actions">
+    <button id="note-cancel" style="background:var(--surface2);color:var(--text2);">Abbrechen</button>
+    <button id="note-save" style="background:var(--accent);color:white;">Speichern</button>
+  </div>
+</div>
+
+<!-- CONTEXT MENU -->
+<div id="context-menu">
+  <div class="ctx-item" id="ctx-note">✏️ Notiz bearbeiten</div>
+  <div class="ctx-divider"></div>
+  <div class="ctx-item" id="ctx-clear" style="color:#ef4444">🗑️ Dienst löschen</div>
+</div>
+
+<!-- ============================================================
+     HEADER
+     ============================================================ -->
+<div id="header">
+  <div class="logo">
+    <div class="logo-icon">📋</div>
+    <div class="logo-text">
+      <div class="logo-title">Dienstplan PRO</div>
+      <div class="logo-sub">Helios Duisburg</div>
+    </div>
+  </div>
+
+  <div class="header-divider"></div>
+
+  <div class="view-toggle">
+    <button class="view-btn active" id="btn-month" onclick="setView('month')">MONAT</button>
+    <button class="view-btn" id="btn-week" onclick="setView('week')">WOCHE</button>
+  </div>
+
+  <div class="month-nav">
+    <button onclick="changeMonth(-1)" title="Vorheriger Monat">&#8249;</button>
+    <div class="month-label" id="month-label">APRIL 2026</div>
+    <button onclick="changeMonth(1)" title="Nächster Monat">&#8250;</button>
+  </div>
+
+  <div id="week-controls">
+    <button class="week-nav-btn" onclick="changeWeek(-1)">&#8249;</button>
+    <span class="week-label" id="week-label">KW 14</span>
+    <button class="week-nav-btn" onclick="changeWeek(1)">&#8250;</button>
+  </div>
+
+  <div class="header-divider"></div>
+
+  <div class="zoom-control">
+    <button onclick="adjustZoom(-0.1)" title="Verkleinern">−</button>
+    <input type="range" class="zoom-slider" id="zoom-slider" min="0.5" max="1.5" step="0.05" value="1" oninput="setZoom(+this.value)">
+    <button onclick="adjustZoom(0.1)" title="Vergrößern">+</button>
+    <span class="zoom-label" id="zoom-label">100%</span>
+  </div>
+
+  <div class="workdays-badge" id="workdays-badge">20 Arbeitstage</div>
+
+  <div class="header-spacer"></div>
+
+  <div class="sync-badge offline" id="sync-badge">
+    <div class="sync-dot"></div>
+    <span id="sync-text">Lokal</span>
+  </div>
+
+  <button class="header-btn" id="lock-btn" onclick="toggleLock()" title="Edit-Modus sperren/entsperren">🔓</button>
+  <button class="header-btn" onclick="openModal('modal-employees')" title="Mitarbeiter verwalten">👥</button>
+  <button class="header-btn" onclick="openModal('modal-shifts')" title="Dienste konfigurieren">⚙️</button>
+  <button class="header-btn" onclick="openModal('modal-settings')" title="Einstellungen">☰</button>
+  <button class="header-btn" id="theme-btn" onclick="toggleTheme()" title="Dark/Light Mode">🌙</button>
+
+  <button class="export-btn" onclick="printPDF()">📄 Export</button>
+  <button class="save-btn" onclick="saveAll()">💾 Sichern</button>
+</div>
+
+<!-- ============================================================
+     MAIN
+     ============================================================ -->
+<div id="main">
+
+  <!-- SIDEBAR -->
+  <div id="sidebar" id="shift-sidebar">
+    <!-- filled by JS -->
+  </div>
+
+  <!-- TABLE AREA -->
+  <div id="table-container">
+    <div id="plan-wrapper">
+      <table id="plan-table">
+        <thead id="plan-thead"></thead>
+        <tbody id="plan-tbody"></tbody>
+        <tfoot id="plan-tfoot"></tfoot>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- ============================================================
+     MODAL: EMPLOYEES
+     ============================================================ -->
+<div class="modal-overlay" id="modal-employees">
+  <div class="modal" style="min-width:480px">
+    <div class="modal-title">
+      👥 Mitarbeiter verwalten
+      <button class="modal-close" onclick="closeModal('modal-employees')">×</button>
+    </div>
+    <div id="emp-list-container" class="emp-list"></div>
+    <div class="btn-row" style="margin-top:12px;justify-content:flex-start">
+      <button class="btn btn-primary" onclick="openAddEmployee()">+ Mitarbeiter hinzufügen</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: ADD/EDIT EMPLOYEE -->
+<div class="modal-overlay" id="modal-edit-employee">
+  <div class="modal">
+    <div class="modal-title">
+      <span id="emp-edit-title">Mitarbeiter hinzufügen</span>
+      <button class="modal-close" onclick="closeModal('modal-edit-employee')">×</button>
+    </div>
+    <div class="form-row">
+      <label>Name (Nachname, Vorname)</label>
+      <input type="text" id="emp-name-input" placeholder="MUSTERMANN, MAX">
+    </div>
+    <div class="form-row">
+      <label>Rolle / Funktion</label>
+      <select id="emp-role-input">
+        <option>Stationsleitung</option>
+        <option>Stellv. Leitung</option>
+        <option>Fachkraft</option>
+        <option>Pflegekraft</option>
+        <option>Azubi</option>
+        <option>Praktikant</option>
+        <option>Hilfskraft</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Stellenanteil (VZ): <span id="vz-display">100%</span></label>
+      <input type="range" id="emp-vz-input" min="10" max="100" step="5" value="100"
+        oninput="document.getElementById('vz-display').textContent=this.value+'%'">
+    </div>
+    <div class="form-row">
+      <label>Übertrag Vormonat (Stunden)</label>
+      <input type="number" id="emp-vmt-input" value="0" step="0.5">
+    </div>
+    <input type="hidden" id="emp-edit-id">
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeModal('modal-edit-employee')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveEmployee()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: SHIFT TYPES CONFIG -->
+<div class="modal-overlay" id="modal-shifts">
+  <div class="modal" style="min-width:520px">
+    <div class="modal-title">
+      ⚙️ Dienste konfigurieren
+      <button class="modal-close" onclick="closeModal('modal-shifts')">×</button>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:12px;">
+      Kürzel · Name · Stunden · Farbe (Text) · Hintergrund
+    </div>
+    <div id="shift-config-list"></div>
+    <div class="btn-row" style="justify-content:flex-start;margin-top:8px">
+      <button class="btn btn-secondary" onclick="addShiftType()">+ Dienst hinzufügen</button>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeModal('modal-shifts')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveShiftConfig()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: SETTINGS -->
+<div class="modal-overlay" id="modal-settings">
+  <div class="modal" style="min-width:420px">
+    <div class="modal-title">
+      ☰ Einstellungen
+      <button class="modal-close" onclick="closeModal('modal-settings')">×</button>
+    </div>
+
+    <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">Spalten anzeigen</div>
+    <div class="settings-grid" id="col-toggles"></div>
+
+    <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin:16px 0 10px;">Fußzeile Dienste zählen</div>
+    <div id="footer-toggles" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+
+    <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin:16px 0 10px;">Stundenfaktor</div>
+    <div class="form-row" style="margin-bottom:0">
+      <input type="number" id="hour-factor-input" value="7.7" step="0.1" min="1" max="12">
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeModal('modal-settings')">Schließen</button>
+      <button class="btn btn-primary" onclick="applySettings()">Übernehmen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
+<script>
+// =============================================================================
+// STATE
+// =============================================================================
+let currentYear = new Date().getFullYear();
+let currentMonth = new Date().getMonth(); // 0-indexed
+let currentView = 'month'; // 'month' | 'week'
+let currentWeek = 1; // 1-based week within month
+let currentZoom = 1;
+let editLocked = false;
+let darkMode = false;
+let selectedShift = 'FD';
+let contextTarget = null; // {empId, dateStr}
+
+let settings = {
+  cols: { vz: true, soll: true, ist: true, diff: true, vmt: true },
+  footerShifts: {},
+  hourFactor: 7.7
+};
+
+let shiftTypes = [
+  { id: 'FD', label: 'FD', name: 'Frühdienst',   hours: 7.7, color: '#ffffff', bg: '#0ea5e9' },
+  { id: 'SD', label: 'SD', name: 'Spätdienst',   hours: 7.7, color: '#ffffff', bg: '#d946ef' },
+  { id: 'ND', label: 'ND', name: 'Nachtdienst',  hours: 10,  color: '#ffffff', bg: '#f97316' },
+  { id: 'ZD', label: 'ZD', name: 'Zwischendienst',hours: 7.7,color: '#ffffff', bg: '#7c3aed' },
+  { id: 'ST', label: 'ST', name: 'Spätteam',     hours: 7.7, color: '#ffffff', bg: '#2563eb' },
+  { id: 'U',  label: 'U',  name: 'Urlaub',        hours: 0,   color: '#92400e', bg: '#fef3c7' },
+  { id: 'K',  label: 'K',  name: 'Krank',         hours: 0,   color: '#ffffff', bg: '#ef4444' },
+  { id: 'LT', label: 'LT', name: 'Langzeit',      hours: 7.7, color: '#ffffff', bg: '#10b981' },
+  { id: 'X',  label: 'X',  name: 'Frei',          hours: 0,   color: '#64748b', bg: '#f1f5f9' },
+];
+
+let employees = [
+  { id: 'e1',  name: 'ADAMS, HENDRIK',     role: 'Stationsleitung',  vz: 100, vmt: 0 },
+  { id: 'e2',  name: 'FUCHSA, JENNIFER',   role: 'Stellv. Leitung',  vz: 100, vmt: 0 },
+  { id: 'e3',  name: 'GÜNTER, STEPHANIE',  role: 'Fachkraft',        vz: 100, vmt: 0 },
+  { id: 'e4',  name: 'BLANK, ALEXANDRA',   role: 'Fachkraft',        vz: 100, vmt: 0 },
+  { id: 'e5',  name: 'FRIEDRICH, KRISTINA',role: 'Pflegekraft',      vz: 100, vmt: 0 },
+  { id: 'e6',  name: 'WEIENBERG, HANNA',   role: 'Fachkraft',        vz: 100, vmt: 0 },
+  { id: 'e7',  name: 'HACKMANN, MATTHIAS', role: 'Fachkraft',        vz: 90,  vmt: 0 },
+  { id: 'e8',  name: 'BUCHMÜLLER, JÖRG',   role: 'Fachkraft',        vz: 100, vmt: 0 },
+  { id: 'e9',  name: 'RÖSKEN, KATRIN',     role: 'Pflegekraft',      vz: 100, vmt: 0 },
+  { id: 'e10', name: 'THEISSEN, JENNIFER', role: 'Pflegekraft',      vz: 100, vmt: 0 },
+  { id: 'e11', name: 'DANIELS, JUSTIN',    role: 'Pflegekraft',      vz: 100, vmt: 0 },
+  { id: 'e12', name: 'KAYMAZ, MELDA',      role: 'Pflegekraft',      vz: 100, vmt: 0 },
+  { id: 'e13', name: 'KÜHN, PHILIPP',      role: 'Pflegekraft',      vz: 100, vmt: 0 },
+  { id: 'e14', name: 'STRACHANSKI, JULIA', role: 'Pflegekraft',      vz: 100, vmt: 0 },
+  { id: 'e15', name: 'PREUSSNER, PAULINE', role: 'Pflegekraft',      vz: 100, vmt: 0 },
+  { id: 'e16', name: 'BIELOK, LARA',       role: 'Pflegekraft',      vz: 100, vmt: 0 },
+  { id: 'e17', name: 'WÜSTKAMP, BIANCA',   role: 'Pflegekraft',      vz: 100, vmt: 0 },
+  { id: 'e18', name: 'BONDZAU, MARTINA',   role: 'Pflegekraft',      vz: 100, vmt: 0 },
+];
+
+// shifts[empId][dateStr] = {type:'FD', note:''}
+let shifts = {};
+
+// =============================================================================
+// HOLIDAYS (NRW)
+// =============================================================================
+function getNRWHolidays(year) {
+  // Easter calculation (Gauss)
+  const a = year % 19, b = Math.floor(year / 100), c = year % 100;
+  const d = Math.floor(b / 4), e = b % 4;
+  const f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4), k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31);
+  const day = ((h + l - 7 * m + 114) % 31) + 1;
+  const easter = new Date(year, month - 1, day);
+
+  function addDays(date, n) {
+    const d = new Date(date);
+    d.setDate(d.getDate() + n);
+    return d;
+  }
+  function fmt(d) {
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  const h_fixed = {
+    [`${year}-01-01`]: 'Neujahr',
+    [`${year}-05-01`]: 'Tag der Arbeit',
+    [`${year}-10-03`]: 'Tag der Deutschen Einheit',
+    [`${year}-11-01`]: 'Allerheiligen',
+    [`${year}-12-25`]: '1. Weihnachtstag',
+    [`${year}-12-26`]: '2. Weihnachtstag',
+  };
+  const h_movable = {
+    [fmt(addDays(easter, -2))]:  'Karfreitag',
+    [fmt(easter)]:               'Ostersonntag',
+    [fmt(addDays(easter, 1))]:   'Ostermontag',
+    [fmt(addDays(easter, 39))]:  'Christi Himmelfahrt',
+    [fmt(addDays(easter, 49))]:  'Pfingstsonntag',
+    [fmt(addDays(easter, 50))]:  'Pfingstmontag',
+    [fmt(addDays(easter, 60))]:  'Fronleichnam',
+  };
+  return { ...h_fixed, ...h_movable };
+}
+
+// =============================================================================
+// DATE HELPERS
+// =============================================================================
+const DAYS_DE = ['SO','MO','DI','MI','DO','FR','SA'];
+const MONTHS_DE = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+
+function daysInMonth(y, m) { return new Date(y, m+1, 0).getDate(); }
+
+function dateStr(y, m, d) {
+  return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+}
+
+function isWeekend(y, m, d) {
+  const dow = new Date(y, m, d).getDay();
+  return dow === 0 || dow === 6;
+}
+
+function isToday(y, m, d) {
+  const t = new Date();
+  return t.getFullYear() === y && t.getMonth() === m && t.getDate() === d;
+}
+
+function getWorkdays(y, m) {
+  const hols = getNRWHolidays(y);
+  let count = 0;
+  for (let d = 1; d <= daysInMonth(y, m); d++) {
+    const ds = dateStr(y, m, d);
+    const dow = new Date(y, m, d).getDay();
+    if (dow >= 1 && dow <= 5 && !hols[ds]) count++;
+  }
+  return count;
+}
+
+function calcSoll(vz, workdays, hourFactor) {
+  return Math.round(workdays * hourFactor * (vz / 100) * 10) / 10;
+}
+
+function calcIst(empId, y, m) {
+  const empShifts = shifts[empId] || {};
+  let total = 0;
+  for (let d = 1; d <= daysInMonth(y, m); d++) {
+    const ds = dateStr(y, m, d);
+    if (empShifts[ds] && empShifts[ds].type) {
+      const st = shiftTypes.find(s => s.id === empShifts[ds].type);
+      if (st) total += st.hours;
+    }
+  }
+  return Math.round(total * 10) / 10;
+}
+
+// =============================================================================
+// GET VISIBLE DAYS (month or week)
+// =============================================================================
+function getVisibleDays() {
+  const total = daysInMonth(currentYear, currentMonth);
+  if (currentView === 'month') {
+    return Array.from({length: total}, (_, i) => i+1);
+  } else {
+    // Week: 7 days per week, starting Monday of currentWeek
+    const firstDay = new Date(currentYear, currentMonth, 1);
+    const firstDow = firstDay.getDay(); // 0=Sun
+    // Days in current month, grouped by ISO week
+    const weeks = [];
+    let week = [];
+    for (let d = 1; d <= total; d++) {
+      const dow = new Date(currentYear, currentMonth, d).getDay();
+      if (dow === 1 && week.length > 0) { weeks.push(week); week = []; }
+      week.push(d);
+    }
+    if (week.length > 0) weeks.push(week);
+    const wk = weeks[Math.min(currentWeek-1, weeks.length-1)] || weeks[0];
+    updateWeekLabel(wk);
+    return wk;
+  }
+}
+
+function getWeeksInMonth() {
+  const total = daysInMonth(currentYear, currentMonth);
+  const weeks = [];
+  let week = [];
+  for (let d = 1; d <= total; d++) {
+    const dow = new Date(currentYear, currentMonth, d).getDay();
+    if (dow === 1 && week.length > 0) { weeks.push(week); week = []; }
+    week.push(d);
+  }
+  if (week.length > 0) weeks.push(week);
+  return weeks.length;
+}
+
+function updateWeekLabel(days) {
+  if (!days || days.length === 0) return;
+  const d1 = days[0], d2 = days[days.length-1];
+  document.getElementById('week-label').textContent = `${d1}.–${d2}. ${MONTHS_DE[currentMonth].substring(0,3)}.`;
+}
+
+// =============================================================================
+// RENDER
+// =============================================================================
+function render() {
+  renderHeader();
+  renderSidebar();
+  renderTable();
+  applyZoom();
+}
+
+function renderHeader() {
+  document.getElementById('month-label').textContent =
+    `${MONTHS_DE[currentMonth].toUpperCase()} ${currentYear}`;
+  const wd = getWorkdays(currentYear, currentMonth);
+  document.getElementById('workdays-badge').textContent = `${wd} Arbeitstage`;
+}
+
+function renderSidebar() {
+  const sb = document.getElementById('sidebar');
+  sb.innerHTML = '';
+  shiftTypes.forEach(st => {
+    const btn = document.createElement('button');
+    btn.className = 'sidebar-shift-btn' + (selectedShift === st.id ? ' selected' : '');
+    btn.style.background = st.bg;
+    btn.style.color = st.color;
+    btn.title = st.name + ` (${st.hours}h)`;
+    btn.innerHTML = `${st.label}<span>${st.hours}h</span>`;
+    btn.onclick = () => {
+      selectedShift = st.id;
+      renderSidebar();
+    };
+    sb.appendChild(btn);
+    if (['ND','ST','U'].includes(st.id)) {
+      const div = document.createElement('div');
+      div.className = 'sidebar-divider';
+      sb.appendChild(div);
+    }
+  });
+}
+
+function renderTable() {
+  const holidays = getNRWHolidays(currentYear);
+  const days = getVisibleDays();
+  const thead = document.getElementById('plan-thead');
+  const tbody = document.getElementById('plan-tbody');
+  const tfoot = document.getElementById('plan-tfoot');
+
+  // --- THEAD ---
+  let thHTML = '<tr>';
+  thHTML += `<th class="stat-th emp-th" style="left:0"><div class="th-inner th-employee" style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.5)">Mitarbeiter</div></th>`;
+
+  let statLeft = 150;
+  const statCols = [
+    {key:'vz', label:'VZ'},
+    {key:'soll', label:'Soll'},
+    {key:'ist', label:'Ist'},
+    {key:'diff', label:'+/−'},
+    {key:'vmt', label:'Vmt'},
+  ];
+  statCols.forEach(col => {
+    if (!settings.cols[col.key]) return;
+    thHTML += `<th class="stat-th" style="left:${statLeft}px"><div class="th-inner col-stat">${col.label}</div></th>`;
+    statLeft += 38;
+  });
+
+  days.forEach(d => {
+    const ds = dateStr(currentYear, currentMonth, d);
+    const dow = new Date(currentYear, currentMonth, d).getDay();
+    const dayName = DAYS_DE[dow];
+    const wknd = isWeekend(currentYear, currentMonth, d);
+    const isHol = !!holidays[ds];
+    const isTod = isToday(currentYear, currentMonth, d);
+    let cls = '';
+    if (isTod) cls = 'th-today';
+    else if (isHol) cls = 'th-holiday';
+    else if (wknd) cls = 'th-weekend';
+    thHTML += `<th class="${cls}"><div class="th-inner">
+      <div class="th-day-num">${d}</div>
+      <div class="th-day-name">${dayName}</div>
+    </div></th>`;
+  });
+  thHTML += '</tr>';
+  thead.innerHTML = thHTML;
+
+  // --- Compute sticky left positions ---
+  const EMP_WIDTH = 150;
+  const STAT_WIDTH = 44;
+  let stickyLeftAcc = EMP_WIDTH;
+  const statLeftMap = {};
+  statCols.forEach(col => {
+    statLeftMap[col.key] = stickyLeftAcc;
+    if (settings.cols[col.key]) stickyLeftAcc += STAT_WIDTH;
+  });
+
+  // --- TBODY ---
+  let tbHTML = '';
+  employees.forEach((emp, idx) => {
+    const workdays = getWorkdays(currentYear, currentMonth);
+    const soll = calcSoll(emp.vz, workdays, settings.hourFactor);
+    const ist  = calcIst(emp.id, currentYear, currentMonth);
+    const diff = Math.round((ist - soll + (emp.vmt||0)) * 10) / 10;
+    const diffSign = diff >= 0 ? '+' : '';
+    const diffClass = diff >= 0 ? 'positive' : 'negative';
+
+    tbHTML += `<tr class="emp-row" data-empid="${emp.id}" draggable="${!editLocked}" 
+      ondragstart="dragStart(event,'${emp.id}')"
+      ondragover="dragOver(event)"
+      ondrop="dropRow(event,'${emp.id}')"
+      ondragend="dragEnd(event)">`;
+
+    tbHTML += `<td class="employee-cell" ondblclick="openEditEmployee('${emp.id}')">
+      <div class="emp-name">${emp.name}</div>
+      <div class="emp-role">${emp.role}</div>
+    </td>`;
+
+    if (settings.cols.vz)   tbHTML += `<td class="stat-cell stat-vz" style="position:sticky;left:${statLeftMap.vz}px">${emp.vz}%</td>`;
+    if (settings.cols.soll) tbHTML += `<td class="stat-cell" style="position:sticky;left:${statLeftMap.soll}px">${soll}</td>`;
+    if (settings.cols.ist)  tbHTML += `<td class="stat-cell" style="position:sticky;left:${statLeftMap.ist}px">${ist}</td>`;
+    if (settings.cols.diff) tbHTML += `<td class="stat-cell ${diffClass}" style="position:sticky;left:${statLeftMap.diff}px">${diffSign}${diff}</td>`;
+    if (settings.cols.vmt)  tbHTML += `<td class="stat-cell" style="position:sticky;left:${statLeftMap.vmt}px">${emp.vmt||0}</td>`;
+
+    days.forEach(d => {
+      const ds = dateStr(currentYear, currentMonth, d);
+      const wknd = isWeekend(currentYear, currentMonth, d);
+      const isHol = !!holidays[ds];
+      const isTod = isToday(currentYear, currentMonth, d);
+      let cls = 'day-cell';
+      if (isTod) cls += ' today-col';
+      else if (isHol) cls += ' holiday';
+      else if (wknd) cls += ' weekend';
+
+      const empShifts = shifts[emp.id] || {};
+      const cell = empShifts[ds];
+      let inner = '';
+      if (cell && cell.type) {
+        const st = shiftTypes.find(s => s.id === cell.type);
+        if (st) {
+          inner = `<div class="shift-badge" style="background:${st.bg};color:${st.color}" 
+            onclick="handleCellClick(event,'${emp.id}','${ds}')"
+            oncontextmenu="handleContextMenu(event,'${emp.id}','${ds}')"
+            title="${st.name}${cell.note ? '\\n'+cell.note : ''}"
+            >${st.label}${cell.note ? '<div class="note-indicator"></div>' : ''}</div>`;
+          if (cell.note) {
+            inner += `<div class="shift-note-text">${escapeHTML(cell.note)}</div>`;
+          }
+        }
+      }
+
+      tbHTML += `<td class="${cls}" 
+        onclick="handleCellClick(event,'${emp.id}','${ds}')"
+        oncontextmenu="handleContextMenu(event,'${emp.id}','${ds}')"
+        >${inner}</td>`;
+    });
+
+    tbHTML += '</tr>';
+  });
+  tbody.innerHTML = tbHTML;
+
+  // --- TFOOT ---
+  const footShifts = shiftTypes.filter(st => settings.footerShifts[st.id] !== false);
+  let tfHTML = '';
+  footShifts.forEach(st => {
+    const visStatCols2 = statCols.filter(c => settings.cols[c.key]);
+    const fColspan = 1 + visStatCols2.length;
+    tfHTML += `<tr class="footer-row">`;
+    tfHTML += `<td colspan="${fColspan}"><div class="footer-label">
+      <span style="display:inline-block;width:22px;height:18px;border-radius:4px;background:${st.bg};color:${st.color};font-size:9px;font-weight:700;text-align:center;line-height:18px;font-family:'Space Mono',monospace">${st.label}</span>
+      ${st.name}
+    </div></td>`;
+
+    days.forEach(d => {
+      const ds = dateStr(currentYear, currentMonth, d);
+      let count = 0;
+      employees.forEach(emp => {
+        if (shifts[emp.id] && shifts[emp.id][ds] && shifts[emp.id][ds].type === st.id) count++;
+      });
+      tfHTML += `<td class="footer-count${count===0?' zero':''}">${count}</td>`;
+    });
+    tfHTML += '</tr>';
+  });
+  tfoot.innerHTML = tfHTML;
+}
+
+// =============================================================================
+// CELL INTERACTION
+// =============================================================================
+function handleCellClick(e, empId, ds) {
+  e.stopPropagation();
+  if (editLocked) return;
+  if (!shifts[empId]) shifts[empId] = {};
+  const current = shifts[empId][ds];
+
+  if (current && current.type === selectedShift) {
+    // Toggle off
+    delete shifts[empId][ds];
+  } else {
+    shifts[empId][ds] = { type: selectedShift, note: current?.note || '' };
+  }
+  renderTable();
+  saveLocal();
+}
+
+function handleContextMenu(e, empId, ds) {
+  e.preventDefault();
+  e.stopPropagation();
+  contextTarget = { empId, ds };
+  const menu = document.getElementById('context-menu');
+  menu.style.left = e.clientX + 'px';
+  menu.style.top  = e.clientY + 'px';
+  menu.classList.add('visible');
+}
+
+document.getElementById('ctx-clear').onclick = () => {
+  if (contextTarget && !editLocked) {
+    const {empId, ds} = contextTarget;
+    if (shifts[empId]) delete shifts[empId][ds];
+    renderTable();
+    saveLocal();
+  }
+  document.getElementById('context-menu').classList.remove('visible');
+};
+
+document.getElementById('ctx-note').onclick = () => {
+  if (contextTarget) openNotePopup(contextTarget.empId, contextTarget.ds);
+  document.getElementById('context-menu').classList.remove('visible');
+};
+
+document.addEventListener('click', () => {
+  document.getElementById('context-menu').classList.remove('visible');
+});
+
+// =============================================================================
+// NOTE POPUP
+// =============================================================================
+let noteTarget = null;
+
+function openNotePopup(empId, ds) {
+  if (editLocked) return;
+  noteTarget = {empId, ds};
+  const popup = document.getElementById('note-popup');
+  const ta = document.getElementById('note-textarea');
+  const existing = shifts[empId]?.[ds]?.note || '';
+  ta.value = existing;
+
+  // Position near center
+  popup.style.left = '50%';
+  popup.style.top = '50%';
+  popup.style.transform = 'translate(-50%, -50%)';
+  popup.classList.add('visible');
+  ta.focus();
+}
+
+document.getElementById('note-save').onclick = () => {
+  if (noteTarget) {
+    const {empId, ds} = noteTarget;
+    const note = document.getElementById('note-textarea').value.trim();
+    if (!shifts[empId]) shifts[empId] = {};
+    if (!shifts[empId][ds]) shifts[empId][ds] = { type: '', note: '' };
+    shifts[empId][ds].note = note;
+    renderTable();
+    saveLocal();
+  }
+  document.getElementById('note-popup').classList.remove('visible');
+};
+
+document.getElementById('note-cancel').onclick = () => {
+  document.getElementById('note-popup').classList.remove('visible');
+};
+
+// =============================================================================
+// ZOOM
+// =============================================================================
+function setZoom(val) {
+  currentZoom = Math.min(1.5, Math.max(0.5, val));
+  document.getElementById('zoom-slider').value = currentZoom;
+  document.getElementById('zoom-label').textContent = Math.round(currentZoom*100) + '%';
+  applyZoom();
+}
+
+function applyZoom() {
+  document.getElementById('plan-table').style.transform = `scale(${currentZoom})`;
+  document.getElementById('plan-wrapper').style.width = `${Math.round(currentZoom*100)}%`;
+}
+
+function adjustZoom(delta) {
+  setZoom(currentZoom + delta);
+}
+
+// =============================================================================
+// VIEW & NAVIGATION
+// =============================================================================
+function setView(v) {
+  currentView = v;
+  document.getElementById('btn-month').classList.toggle('active', v === 'month');
+  document.getElementById('btn-week').classList.toggle('active', v === 'week');
+  document.getElementById('week-controls').classList.toggle('visible', v === 'week');
+  currentWeek = 1;
+  render();
+}
+
+function changeMonth(delta) {
+  currentMonth += delta;
+  if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+  if (currentMonth < 0)  { currentMonth = 11; currentYear--; }
+  currentWeek = 1;
+  render();
+}
+
+function changeWeek(delta) {
+  const maxW = getWeeksInMonth();
+  currentWeek = Math.max(1, Math.min(maxW, currentWeek + delta));
+  render();
+}
+
+// =============================================================================
+// LOCK
+// =============================================================================
+function toggleLock() {
+  editLocked = !editLocked;
+  const btn = document.getElementById('lock-btn');
+  btn.textContent = editLocked ? '🔒' : '🔓';
+  btn.classList.toggle('locked', editLocked);
+  showToast(editLocked ? '🔒 Bearbeitung gesperrt' : '🔓 Bearbeitung aktiv');
+}
+
+// =============================================================================
+// THEME
+// =============================================================================
+function toggleTheme() {
+  darkMode = !darkMode;
+  document.body.dataset.theme = darkMode ? 'dark' : 'light';
+  document.getElementById('theme-btn').textContent = darkMode ? '☀️' : '🌙';
+  saveLocal();
+}
+
+// =============================================================================
+// EMPLOYEE MANAGEMENT
+// =============================================================================
+function openModal(id) {
+  if (id === 'modal-employees') renderEmpList();
+  if (id === 'modal-shifts') renderShiftConfig();
+  if (id === 'modal-settings') renderSettings();
+  document.getElementById(id).classList.add('visible');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('visible');
+}
+
+function renderEmpList() {
+  const container = document.getElementById('emp-list-container');
+  container.innerHTML = '';
+  employees.forEach((emp) => {
+    const item = document.createElement('div');
+    item.className = 'emp-list-item';
+    item.setAttribute('draggable', 'true');
+    item.dataset.empid = emp.id;
+    item.innerHTML = `
+      <span class="drag-handle">⠿</span>
+      <div class="emp-info">
+        <div class="name">${emp.name}</div>
+        <div class="role">${emp.role} · ${emp.vz}% · Vmt: ${emp.vmt||0}h</div>
+      </div>
+      <div class="emp-actions">
+        <button class="icon-btn" onclick="openEditEmployee('${emp.id}')" title="Bearbeiten">✏️</button>
+        <button class="icon-btn danger" onclick="deleteEmployee('${emp.id}')" title="Entfernen">🗑️</button>
+      </div>
+    `;
+    // Drag for reorder
+    item.addEventListener('dragstart', e => { e.dataTransfer.setData('emp-reorder', emp.id); });
+    item.addEventListener('dragover', e => { e.preventDefault(); item.style.background = 'var(--accent-light)'; });
+    item.addEventListener('dragleave', () => { item.style.background = ''; });
+    item.addEventListener('drop', e => {
+      e.preventDefault();
+      item.style.background = '';
+      const fromId = e.dataTransfer.getData('emp-reorder');
+      if (fromId === emp.id) return;
+      const fromIdx = employees.findIndex(x => x.id === fromId);
+      const toIdx   = employees.findIndex(x => x.id === emp.id);
+      const [moved] = employees.splice(fromIdx, 1);
+      employees.splice(toIdx, 0, moved);
+      renderEmpList();
+      render();
+      saveLocal();
+    });
+    container.appendChild(item);
+  });
+}
+
+function openAddEmployee() {
+  document.getElementById('emp-edit-title').textContent = 'Mitarbeiter hinzufügen';
+  document.getElementById('emp-name-input').value = '';
+  document.getElementById('emp-role-input').value = 'Pflegekraft';
+  document.getElementById('emp-vz-input').value = 100;
+  document.getElementById('vz-display').textContent = '100%';
+  document.getElementById('emp-vmt-input').value = 0;
+  document.getElementById('emp-edit-id').value = '';
+  openModal('modal-edit-employee');
+}
+
+function openEditEmployee(empId) {
+  closeModal('modal-employees');
+  const emp = employees.find(e => e.id === empId);
+  if (!emp) return;
+  document.getElementById('emp-edit-title').textContent = 'Mitarbeiter bearbeiten';
+  document.getElementById('emp-name-input').value = emp.name;
+  document.getElementById('emp-role-input').value = emp.role;
+  document.getElementById('emp-vz-input').value = emp.vz;
+  document.getElementById('vz-display').textContent = emp.vz + '%';
+  document.getElementById('emp-vmt-input').value = emp.vmt || 0;
+  document.getElementById('emp-edit-id').value = emp.id;
+  openModal('modal-edit-employee');
+}
+
+function saveEmployee() {
+  const name = document.getElementById('emp-name-input').value.trim().toUpperCase();
+  const role = document.getElementById('emp-role-input').value;
+  const vz   = parseInt(document.getElementById('emp-vz-input').value);
+  const vmt  = parseFloat(document.getElementById('emp-vmt-input').value) || 0;
+  const id   = document.getElementById('emp-edit-id').value;
+
+  if (!name) { alert('Bitte Name eingeben.'); return; }
+
+  if (id) {
+    const emp = employees.find(e => e.id === id);
+    if (emp) { emp.name = name; emp.role = role; emp.vz = vz; emp.vmt = vmt; }
+  } else {
+    employees.push({ id: 'e' + Date.now(), name, role, vz, vmt });
+  }
+  closeModal('modal-edit-employee');
+  render();
+  saveLocal();
+  showToast('✓ Mitarbeiter gespeichert');
+}
+
+function deleteEmployee(empId) {
+  if (!confirm('Mitarbeiter wirklich entfernen? Alle Dienste dieses Mitarbeiters gehen verloren.')) return;
+  employees = employees.filter(e => e.id !== empId);
+  delete shifts[empId];
+  renderEmpList();
+  render();
+  saveLocal();
+}
+
+// =============================================================================
+// SHIFT CONFIG
+// =============================================================================
+function renderShiftConfig() {
+  const container = document.getElementById('shift-config-list');
+  container.innerHTML = '';
+  shiftTypes.forEach((st, idx) => {
+    const item = document.createElement('div');
+    item.className = 'shift-config-item';
+    item.innerHTML = `
+      <div class="shift-preview" style="background:${st.bg};color:${st.color}">${st.label}</div>
+      <div class="shift-config-inputs">
+        <input class="label-inp" type="text" value="${st.label}" placeholder="Kürzel" data-idx="${idx}" data-field="label" oninput="updateShiftPreview(this)">
+        <input class="name-inp" type="text" value="${st.name}" placeholder="Name" data-idx="${idx}" data-field="name">
+        <input class="hours-inp" type="number" value="${st.hours}" step="0.5" placeholder="h" data-idx="${idx}" data-field="hours">
+        <input class="color-inp" type="color" value="${st.color}" data-idx="${idx}" data-field="color" oninput="updateShiftPreview(this)">
+        <input class="color-inp" type="color" value="${st.bg}" data-idx="${idx}" data-field="bg" oninput="updateShiftPreview(this)" title="Hintergrund">
+      </div>
+      <button class="icon-btn danger" onclick="removeShiftType(${idx})" title="Löschen">🗑️</button>
+    `;
+    container.appendChild(item);
+  });
+}
+
+function updateShiftPreview(inp) {
+  const idx = inp.dataset.idx;
+  const field = inp.dataset.field;
+  const item = inp.closest('.shift-config-item');
+  const preview = item.querySelector('.shift-preview');
+  // Update temp
+  const label = item.querySelector('[data-field="label"]').value;
+  const color = item.querySelector('[data-field="color"]').value;
+  const bg    = item.querySelector('[data-field="bg"]').value;
+  preview.textContent = label;
+  preview.style.color = color;
+  preview.style.background = bg;
+}
+
+function addShiftType() {
+  shiftTypes.push({ id: 'S'+Date.now(), label: 'NEU', name: 'Neuer Dienst', hours: 7.7, color: '#ffffff', bg: '#666666' });
+  renderShiftConfig();
+}
+
+function removeShiftType(idx) {
+  shiftTypes.splice(idx, 1);
+  renderShiftConfig();
+}
+
+function saveShiftConfig() {
+  const items = document.querySelectorAll('.shift-config-item');
+  shiftTypes = Array.from(items).map((item, idx) => {
+    const inputs = item.querySelectorAll('input');
+    return {
+      id: shiftTypes[idx]?.id || 'S'+Date.now(),
+      label: inputs[0].value.trim(),
+      name:  inputs[1].value.trim(),
+      hours: parseFloat(inputs[2].value)||0,
+      color: inputs[3].value,
+      bg:    inputs[4].value,
+    };
+  });
+  closeModal('modal-shifts');
+  renderSidebar();
+  renderTable();
+  saveLocal();
+  showToast('✓ Dienste gespeichert');
+}
+
+// =============================================================================
+// SETTINGS
+// =============================================================================
+function renderSettings() {
+  const ct = document.getElementById('col-toggles');
+  const colLabels = {vz:'Stellenanteil (VZ)', soll:'Soll-Stunden', ist:'Ist-Stunden', diff:'Differenz (+/−)', vmt:'Vormonat'};
+  ct.innerHTML = Object.keys(colLabels).map(key => `
+    <div class="toggle-row">
+      <span class="toggle-label">${colLabels[key]}</span>
+      <label class="toggle-switch">
+        <input type="checkbox" data-col="${key}" ${settings.cols[key]?'checked':''}>
+        <div class="toggle-slider"></div>
+      </label>
+    </div>
+  `).join('');
+
+  const ft = document.getElementById('footer-toggles');
+  ft.innerHTML = shiftTypes.map(st => `
+    <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:4px 8px;border-radius:5px;background:var(--surface2);border:1.5px solid var(--border)">
+      <input type="checkbox" data-footer="${st.id}" ${settings.footerShifts[st.id]!==false?'checked':''}>
+      <span style="display:inline-block;width:28px;height:22px;border-radius:4px;background:${st.bg};color:${st.color};font-size:9px;font-weight:700;text-align:center;line-height:22px">${st.label}</span>
+    </label>
+  `).join('');
+
+  document.getElementById('hour-factor-input').value = settings.hourFactor;
+}
+
+function applySettings() {
+  document.querySelectorAll('#col-toggles input[data-col]').forEach(inp => {
+    settings.cols[inp.dataset.col] = inp.checked;
+  });
+  document.querySelectorAll('#footer-toggles input[data-footer]').forEach(inp => {
+    settings.footerShifts[inp.dataset.footer] = inp.checked;
+  });
+  settings.hourFactor = parseFloat(document.getElementById('hour-factor-input').value) || 7.7;
+  closeModal('modal-settings');
+  render();
+  saveLocal();
+  showToast('✓ Einstellungen gespeichert');
+}
+
+// =============================================================================
+// DRAG & DROP ROWS (in table)
+// =============================================================================
+let dragEmpId = null;
+function dragStart(e, empId) {
+  if (editLocked) { e.preventDefault(); return; }
+  dragEmpId = empId;
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(() => {
+    e.target.closest('tr').classList.add('dragging');
+  }, 0);
+}
+function dragOver(e) {
+  if (!dragEmpId) return;
+  e.preventDefault();
+  e.currentTarget.classList.add('drag-over');
+}
+function dropRow(e, targetEmpId) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (!dragEmpId || dragEmpId === targetEmpId) return;
+  const fromIdx = employees.findIndex(x => x.id === dragEmpId);
+  const toIdx   = employees.findIndex(x => x.id === targetEmpId);
+  const [moved] = employees.splice(fromIdx, 1);
+  employees.splice(toIdx, 0, moved);
+  dragEmpId = null;
+  render();
+  saveLocal();
+}
+function dragEnd(e) {
+  document.querySelectorAll('.emp-row').forEach(r => {
+    r.classList.remove('drag-over', 'dragging');
+  });
+  dragEmpId = null;
+}
+
+// =============================================================================
+// PDF / PRINT
+// =============================================================================
+function printPDF() {
+  showToast('⏳ PDF wird vorbereitet…');
+  setTimeout(() => { window.print(); }, 300);
+}
+
+// =============================================================================
+// TOAST
+// =============================================================================
+let toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.classList.remove('show'); }, 2500);
+}
+
+// =============================================================================
+// ESCAPE HTML
+// =============================================================================
+function escapeHTML(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// =============================================================================
+// PERSISTENCE – LOCAL STORAGE
+// =============================================================================
+const LS_KEY = 'dienstplan-pro-data';
+
+function getState() {
+  return { employees, shifts, shiftTypes, settings, darkMode, currentYear, currentMonth, currentZoom };
+}
+
+function saveLocal() {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(getState()));
+  } catch(e) {}
+}
+
+function loadLocal() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return false;
+    const d = JSON.parse(raw);
+    if (d.employees) employees = d.employees;
+    if (d.shifts)    shifts    = d.shifts;
+    if (d.shiftTypes) shiftTypes = d.shiftTypes;
+    if (d.settings)  settings  = { ...settings, ...d.settings };
+    if (d.darkMode !== undefined) {
+      darkMode = d.darkMode;
+      document.body.dataset.theme = darkMode ? 'dark' : 'light';
+      document.getElementById('theme-btn').textContent = darkMode ? '☀️' : '🌙';
+    }
+    if (d.currentZoom) { currentZoom = d.currentZoom; setZoom(currentZoom); }
+    return true;
+  } catch(e) { return false; }
+}
+
+// =============================================================================
+// PERSISTENCE – FIREBASE
+// =============================================================================
+async function saveFirebase() {
+  const db = window.__firebaseDB;
+  if (!db || !window.__firebaseReady) return false;
+  try {
+    const { doc, setDoc } = window.__firestoreAPI;
+    const key = `plan-${currentYear}-${String(currentMonth+1).padStart(2,'0')}`;
+    await setDoc(doc(db, 'dienstplan', key), getState());
+    return true;
+  } catch(e) {
+    console.error('Firebase save error', e);
+    return false;
+  }
+}
+
+async function loadFirebase() {
+  const db = window.__firebaseDB;
+  if (!db || !window.__firebaseReady) return false;
+  try {
+    const { doc, getDoc } = window.__firestoreAPI;
+    const key = `plan-${currentYear}-${String(currentMonth+1).padStart(2,'0')}`;
+    const snap = await getDoc(doc(db, 'dienstplan', key));
+    if (snap.exists()) {
+      const d = snap.data();
+      if (d.employees) employees = d.employees;
+      if (d.shifts)    shifts    = d.shifts;
+      if (d.shiftTypes) shiftTypes = d.shiftTypes;
+      if (d.settings)  settings  = { ...settings, ...d.settings };
+      return true;
+    }
+  } catch(e) { console.error('Firebase load error', e); }
+  return false;
+}
+
+function updateSyncBadge(online) {
+  const badge = document.getElementById('sync-badge');
+  const text  = document.getElementById('sync-text');
+  if (online) {
+    badge.className = 'sync-badge online';
+    text.textContent = 'Cloud-Sync';
+  } else {
+    badge.className = 'sync-badge offline';
+    text.textContent = 'Lokal';
+  }
+}
+
+async function saveAll() {
+  saveLocal();
+  const saved = await saveFirebase();
+  updateSyncBadge(saved);
+  showToast(saved ? '☁️ In Cloud gespeichert!' : '💾 Lokal gespeichert');
+}
+
+// =============================================================================
+// INIT
+// =============================================================================
+async function init() {
+  // Load local first (fast)
+  loadLocal();
+
+  // Try Firebase
+  window.addEventListener('firebaseReady', async () => {
+    const fb = await loadFirebase();
+    updateSyncBadge(fb);
+    if (fb) render();
+  });
+
+  // Initialize settings.footerShifts for all shift types
+  shiftTypes.forEach(st => {
+    if (settings.footerShifts[st.id] === undefined) settings.footerShifts[st.id] = true;
+  });
+
+  render();
+  setZoom(currentZoom);
+
+  // Hide loader
+  setTimeout(() => {
+    document.getElementById('loading').classList.add('hidden');
+  }, 600);
+}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.classList.remove('visible');
+  });
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.visible').forEach(m => m.classList.remove('visible'));
+    document.getElementById('note-popup').classList.remove('visible');
+    document.getElementById('context-menu').classList.remove('visible');
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+    e.preventDefault();
+    saveAll();
+  }
+});
+
+init();
+</script>
+</body>
+</html>

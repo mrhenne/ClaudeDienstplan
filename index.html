@@ -866,8 +866,76 @@ body::before {
 [data-theme="dark"] .note-only-icon { color: #fbbf24; }
 [data-theme="dark"] .note-only-text  { color: #fcd34d; }
 
-/* Employee cell context menu trigger */
-.employee-cell { cursor: context-menu; }
+/* Undo/Redo buttons */
+.undo-redo-group {
+  display: flex;
+  gap: 3px;
+  flex-shrink: 0;
+}
+.undo-btn {
+  width: 30px; height: 30px;
+  border: 1px solid var(--header-border);
+  background: rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.75);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition);
+  backdrop-filter: var(--blur-sm);
+}
+.undo-btn:hover:not(:disabled) { background: rgba(255,255,255,0.16); color: white; transform: translateY(-1px); }
+.undo-btn:disabled { opacity: 0.28; cursor: not-allowed; }
+
+/* Pan cursor states */
+#table-container.pan-ready  { cursor: grab; }
+#table-container.pan-active { cursor: grabbing; user-select: none; }
+
+/* Employee highlight/focus mode */
+.emp-row.focus-dimmed td { opacity: 0.22; transition: opacity 0.25s; }
+.emp-row.focus-dimmed td.employee-cell { opacity: 0.22; }
+.emp-row.focus-active td { opacity: 1; }
+.emp-row.focus-active .employee-cell { background: rgba(91,127,255,0.12) !important; }
+.focus-mode-on .employee-cell { cursor: pointer; }
+
+/* Copy-month badge in header */
+#copy-month-btn.has-source {
+  background: rgba(16,185,129,0.18);
+  border-color: rgba(16,185,129,0.4);
+  color: #6ee7b7;
+}
+
+/* Highlight bar above table when in focus mode */
+.focus-banner {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: linear-gradient(90deg, rgba(91,127,255,0.18), rgba(124,58,237,0.18));
+  border-bottom: 1px solid rgba(91,127,255,0.3);
+  padding: 4px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(180,200,255,0.9);
+  display: none;
+  align-items: center;
+  gap: 8px;
+  backdrop-filter: var(--blur-sm);
+}
+.focus-banner.visible { display: flex; }
+.focus-banner button {
+  margin-left: auto;
+  padding: 2px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(91,127,255,0.4);
+  background: rgba(91,127,255,0.2);
+  color: rgba(180,200,255,0.9);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all var(--transition);
+}
+.focus-banner button:hover { background: rgba(91,127,255,0.35); }
 .emp-fill-hint {
   font-size: 9px;
   color: var(--text3);
@@ -1601,6 +1669,12 @@ body::before {
     <span class="zoom-label" id="zoom-label">100%</span>
   </div>
 
+  <!-- Undo / Redo -->
+  <div class="undo-redo-group">
+    <button class="undo-btn" id="undo-btn" onclick="undoAction()" title="Rückgängig (Ctrl+Z)" disabled>↩</button>
+    <button class="undo-btn" id="redo-btn" onclick="redoAction()" title="Wiederholen (Ctrl+Y)" disabled>↪</button>
+  </div>
+
   <div class="workdays-badge" id="workdays-badge">20 Arbeitstage</div>
 
   <div class="header-spacer"></div>
@@ -1611,6 +1685,8 @@ body::before {
   </div>
 
   <button class="header-btn" id="lock-btn" onclick="toggleLock()" title="Edit-Modus sperren/entsperren">🔓</button>
+  <button class="header-btn" id="pan-btn" onclick="togglePanMode()" title="Drag-to-Pan ein/aus (P)">✋</button>
+  <button class="header-btn" id="copy-month-btn" onclick="openCopyMonthModal()" title="Vormonat als Vorlage kopieren">📋</button>
   <button class="header-btn" onclick="openModal('modal-employees')" title="Mitarbeiter verwalten">👥</button>
   <button class="header-btn" onclick="openModal('modal-shifts')" title="Dienste konfigurieren">⚙️</button>
   <button class="header-btn" onclick="openModal('modal-settings')" title="Einstellungen">☰</button>
@@ -1633,6 +1709,11 @@ body::before {
 
   <!-- TABLE AREA -->
   <div id="table-container">
+    <!-- Focus-mode Banner -->
+    <div class="focus-banner" id="focus-banner">
+      <span>👁️ Fokus: <strong id="focus-emp-name">—</strong></span>
+      <button onclick="clearFocusMode()">× Fokus aufheben</button>
+    </div>
     <div id="plan-wrapper">
       <table id="plan-table">
         <thead id="plan-thead"></thead>
@@ -1642,6 +1723,41 @@ body::before {
     </div>
   </div>
 
+</div>
+
+<!-- MODAL: COPY MONTH -->
+<div class="modal-overlay" id="modal-copy-month">
+  <div class="modal" style="min-width:400px">
+    <div class="modal-title">
+      📋 Vorlage aus Vormonat
+      <button class="modal-close" onclick="closeModal('modal-copy-month')">×</button>
+    </div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6;">
+      Dienste aus einem anderen Monat als <strong>Startvorlage</strong> in den aktuellen Monat kopieren.<br>
+      <span style="font-size:11px;color:var(--text3);">Bereits belegte Tage werden übersprungen.</span>
+    </div>
+    <div class="form-row">
+      <label>Quellmonat</label>
+      <select id="copy-source-month">
+        <!-- filled by JS -->
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Quellmitarbeiter</label>
+      <select id="copy-source-emp">
+        <option value="__all__">Alle Mitarbeiter (1:1)</option>
+        <!-- filled by JS -->
+      </select>
+    </div>
+    <div class="toggle-row" style="margin-bottom:12px">
+      <span class="toggle-label">Notizen ebenfalls kopieren</span>
+      <label class="toggle-switch"><input type="checkbox" id="copy-with-notes" checked><span class="toggle-slider"></span></label>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeModal('modal-copy-month')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="executeCopyMonth()">📋 Jetzt kopieren</button>
+    </div>
+  </div>
 </div>
 
 <!-- ============================================================
@@ -1777,6 +1893,45 @@ let editLocked = false;
 let darkMode = false;
 let selectedShift = 'FD';
 let contextTarget = null; // {empId, dateStr}
+let focusEmpId    = null; // currently focused employee (highlight mode)
+let panModeActive = false; // drag-to-pan toggle
+
+// =============================================================================
+// UNDO / REDO
+// =============================================================================
+const MAX_HISTORY = 50;
+let undoStack = []; // array of JSON strings of `shifts`
+let redoStack = [];
+
+function pushHistory() {
+  undoStack.push(JSON.stringify(shifts));
+  if (undoStack.length > MAX_HISTORY) undoStack.shift();
+  redoStack = []; // clear redo on new action
+  updateUndoRedoBtns();
+}
+
+function undoAction() {
+  if (!undoStack.length) return;
+  redoStack.push(JSON.stringify(shifts));
+  shifts = JSON.parse(undoStack.pop());
+  updateUndoRedoBtns();
+  renderTable(); saveLocal();
+  showToast('↩ Rückgängig');
+}
+
+function redoAction() {
+  if (!redoStack.length) return;
+  undoStack.push(JSON.stringify(shifts));
+  shifts = JSON.parse(redoStack.pop());
+  updateUndoRedoBtns();
+  renderTable(); saveLocal();
+  showToast('↪ Wiederholt');
+}
+
+function updateUndoRedoBtns() {
+  document.getElementById('undo-btn').disabled = undoStack.length === 0;
+  document.getElementById('redo-btn').disabled = redoStack.length === 0;
+}
 
 let settings = {
   cols: { vz: true, soll: true, ist: true, diff: true, vmt: true },
@@ -2125,11 +2280,12 @@ function renderTable() {
       ondragend="dragEnd(event)">`;
 
     tbHTML += `<td class="employee-cell" 
-      ondblclick="openEditEmployee('${emp.id}')"
+      onclick="toggleFocusMode('${emp.id}')"
+      ondblclick="event.stopPropagation();openEditEmployee('${emp.id}')"
       oncontextmenu="handleEmpContextMenu(event,'${emp.id}')">
       <div class="emp-name">${emp.name}</div>
       <div class="emp-role">${emp.role}</div>
-      <div class="emp-fill-hint">Rechtsklick: Ausfüllen…</div>
+      <div class="emp-fill-hint">Rechtsklick: Ausfüllen • Doppelklick: Bearbeiten</div>
     </td>`;
 
     if (settings.cols.vz)   tbHTML += `<td class="stat-cell stat-vz" style="position:sticky;left:${statLeftMap.vz}px">${emp.vz}%</td>`;
@@ -2218,6 +2374,8 @@ function renderTable() {
     tbHTML += '</tr>';
   });
   tbody.innerHTML = tbHTML;
+  // Re-apply focus highlight after DOM rebuild
+  if (focusEmpId) applyFocusMode();
 
   // --- TFOOT ---
   const footShifts = shiftTypes.filter(st => settings.footerShifts[st.id] !== false);
@@ -2250,10 +2408,10 @@ function renderTable() {
 function handleCellClick(e, empId, ds) {
   e.stopPropagation();
   if (editLocked) return;
-  // Don't trigger shift assignment when clicking note chip, pencil btn, or rest badge
   if (e.target.closest('.note-only-chip') ||
       e.target.closest('.note-edit-btn') ||
       e.target.closest('.rest-violation-badge')) return;
+  pushHistory();
   if (!shifts[empId]) shifts[empId] = {};
   const current = shifts[empId][ds];
 
@@ -2320,6 +2478,7 @@ document.getElementById('emp-ctx-fill-all').onclick = () => {
 document.getElementById('emp-ctx-clear-month').onclick = () => {
   if (!empContextTarget || editLocked) return;
   if (!confirm(`Gesamten Monat für ${employees.find(e=>e.id===empContextTarget)?.name || ''} löschen?`)) return;
+  pushHistory();
   const total = daysInMonth(currentYear, currentMonth);
   if (!shifts[empContextTarget]) shifts[empContextTarget] = {};
   for (let d = 1; d <= total; d++) {
@@ -2332,6 +2491,7 @@ document.getElementById('emp-ctx-clear-month').onclick = () => {
 };
 
 function fillEmployeeMonth(empId, includeWeekends) {
+  pushHistory();
   const holidays = getNRWHolidays(currentYear);
   const total = daysInMonth(currentYear, currentMonth);
   if (!shifts[empId]) shifts[empId] = {};
@@ -2339,11 +2499,11 @@ function fillEmployeeMonth(empId, includeWeekends) {
   for (let d = 1; d <= total; d++) {
     const ds = dateStr(currentYear, currentMonth, d);
     const existing = shifts[empId][ds];
-    if (existing && existing.type) continue; // bereits belegt → überspringen
+    if (existing && existing.type) continue;
     if (!includeWeekends) {
       const dow = new Date(currentYear, currentMonth, d).getDay();
-      if (dow === 0 || dow === 6) continue; // Wochenende überspringen
-      if (holidays[ds]) continue; // Feiertag überspringen
+      if (dow === 0 || dow === 6) continue;
+      if (holidays[ds]) continue;
     }
     shifts[empId][ds] = { type: selectedShift, note: existing?.note || '', swap: false };
     filled++;
@@ -2361,6 +2521,7 @@ document.addEventListener('click', (e) => {
 
 document.getElementById('ctx-clear').onclick = () => {
   if (contextTarget && !editLocked) {
+    pushHistory();
     const {empId, ds} = contextTarget;
     if (shifts[empId]) delete shifts[empId][ds];
     renderTable();
@@ -2447,6 +2608,7 @@ function openNotePopup(empId, ds) {
 
 document.getElementById('note-save').onclick = () => {
   if (noteTarget) {
+    pushHistory();
     const {empId, ds} = noteTarget;
     const note = document.getElementById('note-textarea').value.trim();
     if (!shifts[empId]) shifts[empId] = {};
@@ -2461,6 +2623,7 @@ document.getElementById('note-save').onclick = () => {
 
 document.getElementById('note-delete').onclick = () => {
   if (noteTarget) {
+    pushHistory();
     const {empId, ds} = noteTarget;
     if (shifts[empId]?.[ds]) {
       shifts[empId][ds].note = '';
@@ -3199,12 +3362,158 @@ document.addEventListener('keydown', e => {
     document.querySelectorAll('.modal-overlay.visible').forEach(m => m.classList.remove('visible'));
     document.getElementById('note-popup').classList.remove('visible');
     document.getElementById('context-menu').classList.remove('visible');
+    document.getElementById('emp-context-menu').classList.remove('visible');
+    if (focusEmpId) clearFocusMode();
   }
-  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-    e.preventDefault();
-    saveAll();
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveAll(); }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undoAction(); }
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || e.key === 'Y')) { e.preventDefault(); redoAction(); }
+  if (e.key === 'p' || e.key === 'P') {
+    // Only if not typing in an input
+    if (!e.target.matches('input,textarea,select')) togglePanMode();
   }
 });
+
+// =============================================================================
+// PAN MODE (Drag-to-scroll)
+// =============================================================================
+(function initPan() {
+  const tc = document.getElementById('table-container');
+  let isPanning = false;
+  let startX, startY, scrollLeft, scrollTop;
+
+  tc.addEventListener('mousedown', e => {
+    // Middle mouse always pans; left mouse only when pan mode active and not on interactive element
+    const isMiddle = e.button === 1;
+    const isLeft   = e.button === 0 && panModeActive;
+    if (!isMiddle && !isLeft) return;
+    if (isLeft && e.target.closest('button,input,select,textarea,.shift-badge,.note-only-chip')) return;
+    isPanning = true;
+    startX = e.clientX; startY = e.clientY;
+    scrollLeft = tc.scrollLeft; scrollTop = tc.scrollTop;
+    tc.classList.add('pan-active');
+    e.preventDefault();
+  });
+
+  window.addEventListener('mousemove', e => {
+    if (!isPanning) return;
+    tc.scrollLeft = scrollLeft - (e.clientX - startX);
+    tc.scrollTop  = scrollTop  - (e.clientY - startY);
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (!isPanning) return;
+    isPanning = false;
+    tc.classList.remove('pan-active');
+    if (!panModeActive) tc.classList.remove('pan-ready');
+  });
+})();
+
+function togglePanMode() {
+  panModeActive = !panModeActive;
+  const btn = document.getElementById('pan-btn');
+  const tc  = document.getElementById('table-container');
+  btn.classList.toggle('active', panModeActive);
+  tc.classList.toggle('pan-ready', panModeActive);
+  showToast(panModeActive ? '✋ Pan-Modus aktiv – Klicken & Ziehen zum Verschieben' : '✋ Pan-Modus deaktiviert');
+}
+
+// =============================================================================
+// FOCUS / HIGHLIGHT MODE
+// =============================================================================
+function toggleFocusMode(empId) {
+  if (focusEmpId === empId) {
+    clearFocusMode();
+    return;
+  }
+  focusEmpId = empId;
+  applyFocusMode();
+  const emp = employees.find(e => e.id === empId);
+  document.getElementById('focus-emp-name').textContent = emp ? emp.name : '—';
+  document.getElementById('focus-banner').classList.add('visible');
+  showToast(`👁️ Fokus: ${emp?.name || ''}`);
+}
+
+function clearFocusMode() {
+  focusEmpId = null;
+  document.getElementById('focus-banner').classList.remove('visible');
+  document.querySelectorAll('.emp-row').forEach(row => {
+    row.classList.remove('focus-dimmed', 'focus-active');
+  });
+}
+
+function applyFocusMode() {
+  if (!focusEmpId) return;
+  document.querySelectorAll('.emp-row').forEach(row => {
+    const id = row.dataset.empid;
+    row.classList.toggle('focus-dimmed', id !== focusEmpId);
+    row.classList.toggle('focus-active',  id === focusEmpId);
+  });
+}
+
+// =============================================================================
+// COPY MONTH (Vorlagenmonat)
+// =============================================================================
+function openCopyMonthModal() {
+  const sel = document.getElementById('copy-source-month');
+  sel.innerHTML = '';
+  // Offer last 12 months
+  for (let i = 1; i <= 12; i++) {
+    let m = currentMonth - i;
+    let y = currentYear;
+    while (m < 0)  { m += 12; y--; }
+    const opt = document.createElement('option');
+    opt.value = `${y}-${m}`;
+    opt.textContent = `${MONTHS_DE[m]} ${y}`;
+    sel.appendChild(opt);
+  }
+  const empSel = document.getElementById('copy-source-emp');
+  // keep first "__all__" option, rebuild employee options
+  while (empSel.options.length > 1) empSel.remove(1);
+  employees.forEach(emp => {
+    const opt = document.createElement('option');
+    opt.value = emp.id;
+    opt.textContent = emp.name;
+    empSel.appendChild(opt);
+  });
+  openModal('modal-copy-month');
+}
+
+function executeCopyMonth() {
+  const [srcY, srcM] = document.getElementById('copy-source-month').value.split('-').map(Number);
+  const srcEmpVal = document.getElementById('copy-source-emp').value;
+  const withNotes = document.getElementById('copy-with-notes').checked;
+  const totalSrc  = daysInMonth(srcY, srcM);
+  const totalDst  = daysInMonth(currentYear, currentMonth);
+  pushHistory();
+  let copied = 0;
+
+  // Map: src day-of-week position → dst day. We align by weekday (Mon=1st workday, etc.)
+  // Simpler: copy day-number for day-number if within range
+  employees.forEach(emp => {
+    if (srcEmpVal !== '__all__' && emp.id !== srcEmpVal) return;
+    if (!shifts[emp.id]) shifts[emp.id] = {};
+    const maxD = Math.min(totalSrc, totalDst);
+    for (let d = 1; d <= maxD; d++) {
+      const srcDs = dateStr(srcY, srcM, d);
+      const dstDs = dateStr(currentYear, currentMonth, d);
+      const srcCell = shifts[emp.id]?.[srcDs];
+      const dstCell = shifts[emp.id]?.[dstDs];
+      if (!srcCell?.type) continue; // nothing to copy
+      if (dstCell?.type) continue; // destination already has a shift
+      shifts[emp.id][dstDs] = {
+        type: srcCell.type,
+        note: withNotes ? (srcCell.note || '') : '',
+        swap: false
+      };
+      copied++;
+    }
+  });
+
+  closeModal('modal-copy-month');
+  renderTable(); saveLocal();
+  showToast(`📋 ${copied} Dienste aus ${MONTHS_DE[srcM]} ${srcY} kopiert`);
+}
 
 init();
 </script>

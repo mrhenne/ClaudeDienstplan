@@ -168,17 +168,122 @@ body::before {
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
   color: #ffffff;
-  padding: 0 20px;
+  padding: 0 16px;
   height: 58px;
+  min-height: 58px;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   flex-shrink: 0;
   z-index: 100;
   border-bottom: 1px solid var(--header-border);
   box-shadow: 0 4px 24px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06);
   position: relative;
+  /* CRITICAL: allow horizontal scroll instead of clipping */
+  overflow-x: auto;
+  overflow-y: visible;
+  scrollbar-width: none;
 }
+#header::-webkit-scrollbar { display: none; }
+
+/* =============================================
+   RESPONSIVE LAYOUT MODES
+   body[data-layout="desktop"]   – full header
+   body[data-layout="compact"]   – hide secondary labels
+   body[data-layout="tablet"]    – hide non-essentials
+   body[data-layout="mobile"]    – minimal + drawer
+   ============================================= */
+
+/* Elements hidden in compact mode */
+body[data-layout="compact"] .h-hide-compact { display: none !important; }
+body[data-layout="compact"] #header { gap: 8px; padding: 0 12px; }
+body[data-layout="compact"] .zoom-slider { width: 50px; }
+body[data-layout="compact"] .export-btn span,
+body[data-layout="compact"] .save-btn span:not(.unsaved-dot),
+body[data-layout="compact"] .csv-btn span { display: none; }
+
+/* Elements hidden in tablet mode */
+body[data-layout="tablet"] .h-hide-tablet { display: none !important; }
+body[data-layout="tablet"] #header { gap: 7px; padding: 0 10px; }
+body[data-layout="tablet"] .export-btn span,
+body[data-layout="tablet"] .save-btn span:not(.unsaved-dot),
+body[data-layout="tablet"] .csv-btn span { display: none; }
+body[data-layout="tablet"] .export-btn,
+body[data-layout="tablet"] .csv-btn,
+body[data-layout="tablet"] .save-btn { padding: 6px 10px; }
+body[data-layout="tablet"] .month-label { min-width: 90px; font-size: 11px; letter-spacing: 0.5px; }
+
+/* Elements hidden in mobile mode */
+body[data-layout="mobile"] .h-hide-mobile { display: none !important; }
+body[data-layout="mobile"] #header { gap: 6px; padding: 0 8px; }
+body[data-layout="mobile"] .export-btn span,
+body[data-layout="mobile"] .save-btn span:not(.unsaved-dot),
+body[data-layout="mobile"] .csv-btn span { display: none; }
+body[data-layout="mobile"] .export-btn,
+body[data-layout="mobile"] .save-btn { padding: 6px 8px; min-width: 32px; justify-content: center; }
+body[data-layout="mobile"] .month-label { min-width: 80px; font-size: 11px; letter-spacing: 0; }
+
+/* Mobile overflow drawer */
+#header-overflow-drawer {
+  position: fixed;
+  top: 58px;
+  left: 0; right: 0;
+  background: rgba(10,12,28,0.97);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--header-border);
+  padding: 10px 14px;
+  display: none;
+  flex-wrap: wrap;
+  gap: 8px;
+  z-index: 99;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+#header-overflow-drawer.open { display: flex; }
+
+/* Layout toggle button */
+.layout-toggle-btn {
+  width: 34px; height: 34px;
+  border: 1px solid var(--header-border);
+  background: rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.6);
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition);
+  flex-shrink: 0;
+  backdrop-filter: var(--blur-sm);
+  position: relative;
+}
+.layout-toggle-btn:hover { background: rgba(255,255,255,0.14); color: white; }
+.layout-toggle-btn[data-layout="desktop"]::after { content: "🖥"; }
+.layout-toggle-btn[data-layout="compact"]::after { content: "💻"; }
+.layout-toggle-btn[data-layout="tablet"]::after  { content: "📱"; }
+.layout-toggle-btn[data-layout="mobile"]::after  { content: "📟"; }
+
+/* Auto-responsive media queries (applied when no manual override) */
+body:not([data-layout-manual]) {
+  /* These just set class names – actual hiding done above */
+}
+@media (max-width: 1380px) {
+  body:not([data-layout-manual]) { --auto-layout: compact; }
+  body:not([data-layout-manual]) .h-hide-compact { display: none !important; }
+  body:not([data-layout-manual]) #header { gap: 8px; padding: 0 12px; }
+  body:not([data-layout-manual]) .zoom-slider { width: 50px; }
+}
+@media (max-width: 1100px) {
+  body:not([data-layout-manual]) .h-hide-tablet { display: none !important; }
+  body:not([data-layout-manual]) #header { gap: 7px; padding: 0 10px; }
+  body:not([data-layout-manual]) .export-btn,
+  body:not([data-layout-manual]) .csv-btn,
+  body:not([data-layout-manual]) .save-btn { padding: 6px 10px; }
+  body:not([data-layout-manual]) .month-label { min-width: 90px; font-size: 11px; }
+}
+@media (max-width: 900px) {
+  body:not([data-layout-manual]) .h-hide-mobile { display: none !important; }
+  body:not([data-layout-manual]) #header { gap: 6px; padding: 0 8px; }
+}
+
 .logo {
   display: flex;
   align-items: center;
@@ -1158,7 +1263,140 @@ body.wish-mode-on #wish-mode-btn { background: rgba(22,163,74,0.25) !important; 
   z-index: 5;
 }
 
-/* Employee filter bar */
+/* Multi-cell selection */
+.day-cell.multi-sel {
+  outline: 2.5px solid #f59e0b !important;
+  outline-offset: -2px;
+  background: rgba(245,158,11,0.15) !important;
+  z-index: 4;
+}
+.multi-sel-bar {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(10,12,28,0.95);
+  border: 1.5px solid rgba(245,158,11,0.6);
+  border-radius: 12px;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 9990;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+  font-size: 12px;
+  color: rgba(255,255,255,0.85);
+  white-space: nowrap;
+  pointer-events: all;
+}
+.multi-sel-badge {
+  background: rgba(245,158,11,0.2);
+  border: 1px solid rgba(245,158,11,0.5);
+  color: #f59e0b;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 12px;
+}
+.multi-sel-action {
+  padding: 5px 12px;
+  border-radius: 7px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.08);
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.multi-sel-action:hover { background: rgba(255,255,255,0.16); }
+.multi-sel-action.danger { border-color: rgba(239,68,68,0.4); color: #f87171; }
+.multi-sel-action.danger:hover { background: rgba(239,68,68,0.15); }
+.multi-sel-action.primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); border-color: transparent; }
+
+/* Header button rich tooltips */
+.header-btn { position: relative; }
+.header-btn[data-tip]:hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(8,10,24,0.97);
+  color: rgba(255,255,255,0.88);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.55;
+  white-space: pre;
+  padding: 8px 12px;
+  border-radius: 9px;
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+  z-index: 9999;
+  pointer-events: none;
+  min-width: 160px;
+  max-width: 280px;
+  text-align: left;
+}
+.header-btn[data-tip]:hover::before {
+  content: '';
+  position: absolute;
+  top: calc(100% + 3px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-bottom-color: rgba(8,10,24,0.97);
+  z-index: 9999;
+  pointer-events: none;
+}
+
+/* Row clear button (shown on row hover) */
+.emp-cell { position: relative !important; }
+.row-clear-btn {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: none;
+  background: rgba(239,68,68,0.12);
+  color: #f87171;
+  font-size: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  line-height: 1;
+  z-index: 2;
+}
+.row-clear-btn:hover { background: rgba(239,68,68,0.32); color: white; transform: translateY(-50%) scale(1.1); }
+tr:hover .row-clear-btn { opacity: 1; }
+
+/* Keyboard input buffer toast */
+#kb-buffer-toast {
+  position: fixed;
+  bottom: 72px;
+  right: 22px;
+  background: rgba(8,10,24,0.95);
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  font-family: 'Space Mono', monospace;
+  font-size: 18px;
+  font-weight: 700;
+  padding: 8px 18px;
+  border-radius: 10px;
+  display: none;
+  z-index: 9998;
+  letter-spacing: 3px;
+  box-shadow: 0 4px 16px rgba(91,127,255,0.3);
+}
+#kb-buffer-toast.visible { display: block; }
 #emp-filter-bar {
   display: none;
   padding: 6px 14px 0;
@@ -1901,20 +2139,21 @@ body.wish-mode-on #wish-mode-btn { background: rgba(22,163,74,0.25) !important; 
      HEADER
      ============================================================ -->
 <div id="header">
+  <!-- PRIORITY 1: Always visible -->
   <div class="logo">
     <div class="logo-icon">📋</div>
     <div class="logo-text">
       <div class="logo-title">Dienstplan PRO</div>
-      <div class="logo-sub">Helios Duisburg</div>
+      <div class="logo-sub" id="header-dept-name">Helios Duisburg</div>
     </div>
   </div>
 
-  <div class="header-divider"></div>
+  <div class="header-divider h-hide-mobile"></div>
 
   <div class="view-toggle">
     <button class="view-btn active" id="btn-month" onclick="setView('month')">MONAT</button>
     <button class="view-btn" id="btn-week" onclick="setView('week')">WOCHE</button>
-    <button class="view-btn" id="btn-year" onclick="openYearView()" title="Jahresübersicht">JAHR</button>
+    <button class="view-btn h-hide-tablet" id="btn-year" onclick="openYearView()" title="Jahresübersicht">JAHR</button>
   </div>
 
   <div class="month-nav">
@@ -1929,9 +2168,10 @@ body.wish-mode-on #wish-mode-btn { background: rgba(22,163,74,0.25) !important; 
     <button class="week-nav-btn" onclick="changeWeek(1)">&#8250;</button>
   </div>
 
-  <div class="header-divider"></div>
+  <div class="header-divider h-hide-tablet"></div>
 
-  <div class="zoom-control">
+  <!-- PRIORITY 2: Hidden on tablet/mobile -->
+  <div class="zoom-control h-hide-tablet">
     <button onclick="adjustZoom(-0.1)" title="Verkleinern">−</button>
     <input type="range" class="zoom-slider" id="zoom-slider" min="0.5" max="1.5" step="0.05" value="1" oninput="setZoom(+this.value)">
     <button onclick="adjustZoom(0.1)" title="Vergrößern">+</button>
@@ -1939,36 +2179,78 @@ body.wish-mode-on #wish-mode-btn { background: rgba(22,163,74,0.25) !important; 
   </div>
 
   <!-- Undo / Redo -->
-  <div class="undo-redo-group">
+  <div class="undo-redo-group h-hide-tablet">
     <button class="undo-btn" id="undo-btn" onclick="undoAction()" title="Rückgängig (Ctrl+Z)" disabled>↩</button>
     <button class="undo-btn" id="redo-btn" onclick="redoAction()" title="Wiederholen (Ctrl+Y)" disabled>↪</button>
   </div>
 
-  <div class="workdays-badge" id="workdays-badge">20 Arbeitstage</div>
+  <!-- PRIORITY 3: Hidden on compact/tablet/mobile -->
+  <div class="workdays-badge h-hide-compact" id="workdays-badge">20 Arbeitstage</div>
 
   <div class="header-spacer"></div>
 
-  <div class="sync-badge offline" id="sync-badge">
+  <!-- Sync badge – hide on mobile -->
+  <div class="sync-badge offline h-hide-mobile" id="sync-badge">
     <div class="sync-dot"></div>
     <span id="sync-text">Lokal</span>
   </div>
 
-  <button class="header-btn" id="lock-btn" onclick="toggleLock()" title="Edit-Modus sperren/entsperren">🔓</button>
-  <button class="header-btn" id="pan-btn" onclick="togglePanMode()" title="Drag-to-Pan ein/aus (P)">✋</button>
-  <button class="header-btn" id="wish-mode-btn" onclick="toggleWishMode()" title="Wunsch/Sperr-Modus (W)&#10;Linksklick: Wunsch ✓  Rechtsklick: Sperrtag ✗">🗓</button>
-  <button class="header-btn" id="filter-btn" onclick="toggleFilterBar()" title="Mitarbeiter filtern (F)">🔍</button>
-  <button class="header-btn" id="copy-month-btn" onclick="openCopyMonthModal()" title="Vormonat als Vorlage kopieren">📋</button>
-  <button class="header-btn" onclick="openModal('modal-employees')" title="Mitarbeiter verwalten">👥</button>
-  <button class="header-btn" onclick="openModal('modal-shifts')" title="Dienste konfigurieren">⚙️</button>
-  <button class="header-btn" onclick="openModal('modal-settings')" title="Einstellungen">☰</button>
-  <button class="header-btn" onclick="openStatsModal()" title="Monatsstatistik">📊</button>
-  <button class="header-btn" id="theme-btn" onclick="toggleTheme()" title="Dark/Light Mode">🌙</button>
+  <!-- Core action buttons -->
+  <button class="header-btn" id="lock-btn" onclick="toggleLock()"
+    data-tip="🔒 Bearbeitung sperren&#10;Verhindert versehentliche&#10;Änderungen im Plan">🔓</button>
+  <button class="header-btn h-hide-mobile" id="pan-btn" onclick="togglePanMode()"
+    data-tip="✋ Scrollmodus (P)&#10;Klicken &amp; ziehen um den&#10;Plan zu verschieben">✋</button>
+  <button class="header-btn" id="wish-mode-btn" onclick="toggleWishMode()"
+    data-tip="🗓 Wunsch/Sperr-Modus (W)&#10;Links: Wunschtag ✓ (grün)&#10;Rechts: Sperrtag ✗ (rot)">🗓</button>
+  <button class="header-btn h-hide-tablet" id="filter-btn" onclick="toggleFilterBar()"
+    data-tip="🔍 Mitarbeiter filtern (F)&#10;Nach Name oder Rolle suchen">🔍</button>
+  <button class="header-btn h-hide-compact" id="copy-month-btn" onclick="openCopyMonthModal()"
+    data-tip="📋 Monat kopieren&#10;Vorlage aus Vormonat&#10;übernehmen">📋</button>
+  <button class="header-btn" onclick="openModal('modal-employees')"
+    data-tip="👥 Mitarbeiter verwalten&#10;Hinzufügen, bearbeiten,&#10;Arbeitszeit & Rolle ändern">👥</button>
+  <button class="header-btn h-hide-mobile" onclick="openModal('modal-shifts')"
+    data-tip="⚙️ Dienste konfigurieren&#10;Diensttypen anlegen,&#10;Farben &amp; Stunden">⚙️</button>
+  <button class="header-btn" onclick="openModal('modal-settings')"
+    data-tip="☰ Einstellungen&#10;Spalten, Stundenfaktor,&#10;Fußzeile konfigurieren">☰</button>
+  <button class="header-btn h-hide-tablet" onclick="openStatsModal()"
+    data-tip="📊 Monatsstatistik&#10;Ist/Soll-Stunden, Urlaub,&#10;Kranktage – Übersicht">📊</button>
+  <button class="header-btn h-hide-compact" id="theme-btn" onclick="toggleTheme()"
+    data-tip="🌙 Dark / Light Mode&#10;Hellen oder dunklen&#10;Modus umschalten">🌙</button>
 
-  <button class="export-btn" onclick="printPDF()">📄 PDF</button>
-  <button class="csv-btn" onclick="exportCSV()" title="Monatsplan als CSV exportieren (Excel-kompatibel)">⬇ CSV</button>
-  <button class="export-btn" onclick="openModal('modal-io')" title="Import / Export / Sichern">📦 Archiv</button>
-  <button class="save-btn" onclick="saveAll()">💾 Sichern<span class="unsaved-dot"></span></button>
+  <!-- Layout toggle (device mode) -->
+  <button class="layout-toggle-btn" id="layout-toggle-btn" onclick="cycleLayout()"
+    data-layout="desktop" title="Ansicht wechseln: Desktop / Kompakt / Tablet / Mobil"></button>
+
+  <!-- Mobile overflow toggle -->
+  <button class="header-btn h-show-mobile" id="overflow-drawer-btn" onclick="toggleOverflowDrawer()"
+    title="Weitere Aktionen" style="display:none">⋯</button>
+
+  <button class="export-btn h-hide-mobile" onclick="printPDF()">📄 PDF</button>
+  <button class="csv-btn h-hide-tablet" onclick="exportCSV()" title="Monatsplan als CSV exportieren">⬇ CSV</button>
+  <button class="export-btn h-hide-tablet" onclick="openModal('modal-io')" title="Archiv / Import / Export">📦 Archiv</button>
+  <button class="save-btn" onclick="saveAll()">💾 <span class="h-hide-mobile">Sichern</span><span class="unsaved-dot"></span></button>
 </div>
+
+<!-- Mobile overflow drawer (secondary actions for small screens) -->
+<div id="header-overflow-drawer">
+  <button class="header-btn" onclick="adjustZoom(-0.1)" title="Verkleinern">−</button>
+  <input type="range" class="zoom-slider" id="zoom-slider-drawer" min="0.5" max="1.5" step="0.05" value="1"
+    oninput="setZoom(+this.value); document.getElementById('zoom-slider').value=this.value">
+  <button class="header-btn" onclick="adjustZoom(0.1)" title="Vergrößern">+</button>
+  <span class="zoom-label" id="zoom-label-drawer" style="margin-right:8px">100%</span>
+  <button class="header-btn" id="undo-btn-d" onclick="undoAction()" title="Rückgängig" disabled>↩</button>
+  <button class="header-btn" id="redo-btn-d" onclick="redoAction()" title="Wiederholen" disabled>↪</button>
+  <button class="header-btn" onclick="openStatsModal()" title="Statistik">📊</button>
+  <button class="header-btn" onclick="exportCSV()" title="CSV Export">⬇</button>
+  <button class="header-btn" onclick="openModal('modal-io')" title="Archiv">📦</button>
+  <button class="header-btn" onclick="printPDF()" title="PDF">📄</button>
+  <button class="header-btn" onclick="toggleFilterBar()" title="Filter">🔍</button>
+  <button class="header-btn" onclick="openCopyMonthModal()" title="Monat kopieren">📋</button>
+  <button class="header-btn" onclick="openModal('modal-shifts')" title="Dienste">⚙️</button>
+  <button class="header-btn" onclick="toggleTheme()" title="Theme">🌙</button>
+  <button class="header-btn" onclick="togglePanMode()" title="Scrollen">✋</button>
+</div>
+
 
 <!-- ============================================================
      DEPARTMENT TABS BAR
@@ -2275,9 +2557,18 @@ let focusEmpId    = null;
 let panModeActive = false;
 let wishes    = {};
 let wishMode  = false;
-let cellClipboard = null;
-let navCell = null;
-let empFilter = '';
+let cellClipboard  = null;
+let navCell        = null;
+let empFilter      = '';
+
+// Multi-cell selection
+let selectedCells  = new Set(); // Set of "empId|ds" strings
+let isSelecting    = false;     // drag-selection active
+let selAnchor      = null;      // { empId, ds } start of drag
+
+// Keyboard typing buffer (e.g. "fd" → FD)
+let _kbBuffer      = '';
+let _kbTimer       = null;
 
 // =============================================================================
 // UNSAVED INDICATOR
@@ -2328,6 +2619,11 @@ function redoAction() {
 function updateUndoRedoBtns() {
   document.getElementById('undo-btn').disabled = undoStack.length === 0;
   document.getElementById('redo-btn').disabled = redoStack.length === 0;
+  // Also sync drawer buttons
+  const ud = document.getElementById('undo-btn-d');
+  const rd = document.getElementById('redo-btn-d');
+  if (ud) ud.disabled = undoStack.length === 0;
+  if (rd) rd.disabled = redoStack.length === 0;
 }
 
 // =============================================================================
@@ -2409,7 +2705,7 @@ function switchDept(id) {
   currentDeptId = id;
   const dept = currentDept();
   loadDeptState(dept);
-  document.querySelector('.logo-sub').textContent = dept.name;
+  document.getElementById('header-dept-name').textContent = dept.name;
   undoStack = []; redoStack = [];
   updateUndoRedoBtns();
   clearUnsaved();
@@ -2443,7 +2739,7 @@ function renameDept(id) {
   const name = prompt('Neuer Name:', dept.name);
   if (!name || !name.trim()) return;
   dept.name = name.trim();
-  if (id === currentDeptId) document.querySelector('.logo-sub').textContent = dept.name;
+  if (id === currentDeptId) document.getElementById('header-dept-name').textContent = dept.name;
   renderDeptTabs(); saveLocal();
   showToast('\u270f\ufe0f Umbenannt');
 }
@@ -2456,7 +2752,7 @@ function deleteDept(id) {
   if (currentDeptId === id) {
     currentDeptId = departments[0].id;
     loadDeptState(departments[0]);
-    document.querySelector('.logo-sub').textContent = departments[0].name;
+    document.getElementById('header-dept-name').textContent = departments[0].name;
     render();
   }
   renderDeptTabs(); saveLocal();
@@ -2843,13 +3139,14 @@ function renderTable() {
       ondrop="dropRow(event,'${emp.id}')"
       ondragend="dragEnd(event)">`;
 
-    tbHTML += `<td class="employee-cell" 
+    tbHTML += `<td class="employee-cell emp-cell" 
       onclick="toggleFocusMode('${emp.id}')"
       ondblclick="event.stopPropagation();openEditEmployee('${emp.id}')"
       oncontextmenu="handleEmpContextMenu(event,'${emp.id}')">
       <div class="emp-name">${emp.name}</div>
       <div class="emp-role">${emp.role}</div>
-      <div class="emp-fill-hint">Rechtsklick: Ausfüllen • Doppelklick: Bearbeiten</div>
+      <div class="emp-fill-hint">Doppelklick: Bearbeiten • Rechtsklick: Ausfüllen</div>
+      <button class="row-clear-btn" title="Gesamten Monat leeren" onclick="event.stopPropagation();clearEmployeeMonth('${emp.id}')">🗑</button>
     </td>`;
 
     if (settings.cols.vz)   tbHTML += `<td class="stat-cell stat-vz" style="position:sticky;left:${statLeftMap.vz}px">${emp.vz}%</td>`;
@@ -2973,10 +3270,11 @@ function renderTable() {
 
       tbHTML += `<td class="${cls}${hasNote?' has-note':''}${(!hasShift&&hasNote)?' note-only-cell':''}${wishConflict}"
         data-ds="${ds}"
-        onclick="wishMode ? handleWishClick(event,'${emp.id}','${ds}') : handleCellClick(event,'${emp.id}','${ds}')"
-        ondblclick="event.stopPropagation();wishMode ? null : openNotePopup('${emp.id}','${ds}')"
+        onclick="wishMode ? handleWishClick(event,'${emp.id}','${ds}') : handleCellSingleClick(event,'${emp.id}','${ds}')"
+        ondblclick="wishMode ? null : handleCellDblClick(event,'${emp.id}','${ds}')"
         oncontextmenu="wishMode ? handleWishClick(event,'${emp.id}','${ds}') : handleContextMenu(event,'${emp.id}','${ds}')"
-        onmousedown="if(!wishMode && !panModeActive) { navCell=null; requestAnimationFrame(()=>setNavCell('${emp.id}','${ds}')); }"
+        onmousedown="if(!wishMode && !panModeActive) handleCellMouseDown(event,'${emp.id}','${ds}')"
+        onmouseenter="handleCellMouseEnter(event,'${emp.id}','${ds}')"
         >${inner}${wishOverlay}</td>`;
     });
 
@@ -3021,29 +3319,275 @@ function renderTable() {
 // =============================================================================
 // CELL INTERACTION
 // =============================================================================
-function handleCellClick(e, empId, ds) {
+// =============================================================================
+// MULTI-CELL SELECTION
+// =============================================================================
+function getSelKey(empId, ds) { return empId + '|' + ds; }
+function parseSelKey(key) { const [e, d] = key.split('|'); return {empId: e, ds: d}; }
+
+function toggleCellSel(empId, ds) {
+  const key = getSelKey(empId, ds);
+  if (selectedCells.has(key)) selectedCells.delete(key);
+  else selectedCells.add(key);
+  updateMultiSelUI();
+}
+
+function updateMultiSelUI() {
+  // Update cell highlights
+  document.querySelectorAll('.multi-sel').forEach(el => el.classList.remove('multi-sel'));
+  selectedCells.forEach(key => {
+    const {empId, ds} = parseSelKey(key);
+    const td = document.querySelector(`tr[data-empid="${empId}"] td[data-ds="${ds}"]`);
+    if (td) td.classList.add('multi-sel');
+  });
+  // Show/hide floating bar
+  const bar  = document.getElementById('multi-sel-bar');
+  const cnt  = document.getElementById('multi-sel-count');
+  const n    = selectedCells.size;
+  if (n > 0) {
+    bar.style.display = 'flex';
+    cnt.textContent   = n + ' Zelle' + (n !== 1 ? 'n' : '');
+  } else {
+    bar.style.display = 'none';
+  }
+}
+
+function clearMultiSel() {
+  selectedCells.clear();
+  updateMultiSelUI();
+}
+
+function applyShiftToSelection() {
+  if (!selectedCells.size || editLocked) return;
+  pushHistory();
+  selectedCells.forEach(key => {
+    const {empId, ds} = parseSelKey(key);
+    if (!shifts[empId]) shifts[empId] = {};
+    const cur = shifts[empId][ds];
+    shifts[empId][ds] = { type: selectedShift, note: cur?.note || '', swap: cur?.swap || false };
+  });
+  clearMultiSel();
+  renderTable(); saveLocal();
+  const st = shiftTypes.find(s => s.id === selectedShift);
+  showToast(`✓ ${selectedCells.size || '?'} Zellen → ${st?.label || selectedShift}`);
+}
+
+function clearShiftSelection() {
+  if (!selectedCells.size || editLocked) return;
+  pushHistory();
+  selectedCells.forEach(key => {
+    const {empId, ds} = parseSelKey(key);
+    if (shifts[empId]?.[ds]) {
+      if (shifts[empId][ds].note?.trim()) shifts[empId][ds].type = '';
+      else delete shifts[empId][ds];
+    }
+  });
+  clearMultiSel();
+  renderTable(); saveLocal();
+}
+
+function deleteSelection() {
+  if (!selectedCells.size || editLocked) return;
+  pushHistory();
+  selectedCells.forEach(key => {
+    const {empId, ds} = parseSelKey(key);
+    if (shifts[empId]) delete shifts[empId][ds];
+  });
+  clearMultiSel();
+  renderTable(); saveLocal();
+}
+
+// =============================================================================
+// CELL CLICK HANDLING (single / double / triple / shift+click)
+// =============================================================================
+let _clickTimer   = null;
+let _clickCount   = 0;
+
+function handleCellMouseDown(e, empId, ds) {
+  if (panModeActive) return;
+  // Shift+click = add to multi-selection
+  if (e.shiftKey && selectedCells.size > 0) {
+    e.preventDefault();
+    toggleCellSel(empId, ds);
+    return;
+  }
+  // Start drag selection with Ctrl
+  if (e.ctrlKey || e.metaKey) {
+    e.preventDefault();
+    isSelecting = true;
+    selAnchor   = {empId, ds};
+    if (!selectedCells.has(getSelKey(empId, ds))) selectedCells.add(getSelKey(empId, ds));
+    updateMultiSelUI();
+    return;
+  }
+  // Normal navigation focus
+  navCell = null;
+  requestAnimationFrame(() => setNavCell(empId, ds));
+}
+
+function handleCellMouseEnter(e, empId, ds) {
+  if (!isSelecting) return;
+  selectedCells.add(getSelKey(empId, ds));
+  updateMultiSelUI();
+}
+
+function handleCellSingleClick(e, empId, ds) {
   e.stopPropagation();
   if (editLocked) return;
-  if (e.target.closest('.note-only-chip') ||
-      e.target.closest('.note-edit-btn') ||
-      e.target.closest('.rest-violation-badge')) return;
+  if (e.target.closest('.note-only-chip,.note-edit-btn,.rest-violation-badge')) return;
+  // Shift+click handled in mousedown
+  if (e.shiftKey) return;
+  // Ctrl+click handled in mousedown
+  if (e.ctrlKey || e.metaKey) return;
+
+  // Triple-click detection via click count
+  _clickCount++;
+  clearTimeout(_clickTimer);
+  _clickTimer = setTimeout(() => {
+    if (_clickCount >= 3) {
+      // Triple click → note
+      _clickCount = 0;
+      openNotePopup(empId, ds);
+    } else if (_clickCount === 1) {
+      // Single click – if multi-sel active, add to selection; else set focus only
+      _clickCount = 0;
+      if (selectedCells.size > 0) {
+        toggleCellSel(empId, ds);
+      }
+      // Focus is already set by mousedown
+    } else {
+      _clickCount = 0;
+    }
+  }, 220);
+}
+
+function handleCellDblClick(e, empId, ds) {
+  e.stopPropagation();
+  if (editLocked) return;
+  if (e.target.closest('.note-only-chip,.note-edit-btn,.rest-violation-badge')) return;
+  _clickCount = 0;
+  clearTimeout(_clickTimer);
+  // Double click = assign current shift
   pushHistory();
   if (!shifts[empId]) shifts[empId] = {};
-  const current = shifts[empId][ds];
-
-  if (current && current.type === selectedShift) {
-    // Toggle off – preserve note if it exists
-    if (current.note && current.note.trim()) {
-      shifts[empId][ds] = { type: '', note: current.note, swap: false };
-    } else {
-      delete shifts[empId][ds];
-    }
+  const cur = shifts[empId][ds];
+  if (cur && cur.type === selectedShift) {
+    if (cur.note?.trim()) shifts[empId][ds].type = '';
+    else delete shifts[empId][ds];
   } else {
-    shifts[empId][ds] = { type: selectedShift, note: current?.note || '', swap: current?.swap || false };
+    shifts[empId][ds] = { type: selectedShift, note: cur?.note || '', swap: cur?.swap || false };
   }
-  renderTable();
-  saveLocal();
+  renderTable(); saveLocal();
 }
+
+// Legacy single-click still used in some contexts
+function handleCellClick(e, empId, ds) {
+  handleCellSingleClick(e, empId, ds);
+}
+
+// =============================================================================
+// ROW CLEAR (erase one employee's entire month)
+// =============================================================================
+function clearEmployeeMonth(empId) {
+  const emp = employees.find(em => em.id === empId);
+  if (!confirm(`Alle Dienste von ${emp?.name || 'Mitarbeiter'} in ${MONTHS_DE[currentMonth]} ${currentYear} löschen?`)) return;
+  pushHistory();
+  if (shifts[empId]) {
+    const total = daysInMonth(currentYear, currentMonth);
+    for (let d = 1; d <= total; d++) {
+      delete shifts[empId][dateStr(currentYear, currentMonth, d)];
+    }
+  }
+  renderTable(); saveLocal();
+  showToast(`🗑 ${emp?.name || 'MA'}: Monat geleert`);
+}
+
+// =============================================================================
+// KEYBOARD INPUT BUFFER (type shift codes like fd, nd, sd, k, u, lt…)
+// =============================================================================
+const SHIFT_SHORTCUTS = {
+  'fd': 'FD', 'früh': 'FD', 'frühdienst': 'FD',
+  'sd': 'SD', 'spät': 'SD', 'spätdienst': 'SD',
+  'nd': 'ND', 'nacht': 'ND', 'nachtdienst': 'ND',
+  'zd': 'ZD', 'zwischen': 'ZD',
+  'st': 'ST', 'spätteam': 'ST',
+  'lt': 'LT', 'leitungstag': 'LT', 'leitung': 'LT',
+  'fb': null, // dynamic: first matching FT/FB/FO shift
+  'fort': null,
+  'k': 'K', 'krank': 'K',
+  'u': 'U', 'urlaub': 'U',
+  'x': 'X', 'frei': 'X',
+};
+
+function resolveShortcut(buf) {
+  const low = buf.toLowerCase().trim();
+  // Direct static match
+  if (SHIFT_SHORTCUTS[low] !== undefined) {
+    const id = SHIFT_SHORTCUTS[low];
+    if (id) {
+      const st = shiftTypes.find(s => s.id === id);
+      return st ? st.id : null;
+    }
+    // Dynamic: fortbildung – find first matching shift
+    if (low === 'fb' || low === 'fort') {
+      const st = shiftTypes.find(s => /^(FT|FB|FO|FBT|FORT)/i.test(s.id));
+      return st ? st.id : null;
+    }
+  }
+  // Try exact shift ID match (case-insensitive)
+  const byId = shiftTypes.find(s => s.id.toLowerCase() === low);
+  if (byId) return byId.id;
+  // Try label match
+  const byLabel = shiftTypes.find(s => s.label.toLowerCase() === low);
+  if (byLabel) return byLabel.id;
+  return null;
+}
+
+function feedKbBuffer(char) {
+  _kbBuffer += char;
+  clearTimeout(_kbTimer);
+  // Show buffer toast
+  const toast = document.getElementById('kb-buffer-toast');
+  toast.textContent = _kbBuffer.toUpperCase();
+  toast.classList.add('visible');
+
+  const resolved = resolveShortcut(_kbBuffer);
+  if (resolved) {
+    // Select that shift type
+    const prev = document.querySelector('.sidebar-shift-btn.selected');
+    if (prev) prev.classList.remove('selected');
+    selectedShift = resolved;
+    const btn = document.querySelector(`.sidebar-shift-btn[data-id="${resolved}"]`);
+    if (btn) btn.classList.add('selected');
+    // Apply to navCell or selectedCells
+    if (selectedCells.size > 0) {
+      applyShiftToSelection();
+    } else if (navCell && !editLocked) {
+      pushHistory();
+      if (!shifts[navCell.empId]) shifts[navCell.empId] = {};
+      const cur = shifts[navCell.empId][navCell.ds];
+      shifts[navCell.empId][navCell.ds] = { type: selectedShift, note: cur?.note||'', swap: cur?.swap||false };
+      renderTable(); saveLocal();
+      // Auto-advance to next cell
+      moveNavCell('ArrowRight');
+    }
+    showToast(`⌨ ${shiftTypes.find(s=>s.id===resolved)?.label || resolved} – ${shiftTypes.find(s=>s.id===resolved)?.name || ''}`);
+    _kbBuffer = '';
+    toast.classList.remove('visible');
+    return;
+  }
+
+  // Auto-clear after 1.5s if no match
+  _kbTimer = setTimeout(() => {
+    _kbBuffer = '';
+    toast.classList.remove('visible');
+  }, 1500);
+}
+
+// mouseup ends drag-selection globally
+document.addEventListener('mouseup', () => { isSelecting = false; });
+
+
 
 function handleContextMenu(e, empId, ds) {
   e.preventDefault();
@@ -3259,8 +3803,15 @@ document.getElementById('note-cancel').onclick = () => {
 // =============================================================================
 function setZoom(val) {
   currentZoom = Math.min(1.5, Math.max(0.5, val));
-  document.getElementById('zoom-slider').value = currentZoom;
-  document.getElementById('zoom-label').textContent = Math.round(currentZoom*100) + '%';
+  const s = document.getElementById('zoom-slider');
+  const l = document.getElementById('zoom-label');
+  if (s) s.value = currentZoom;
+  if (l) l.textContent = Math.round(currentZoom*100) + '%';
+  // Sync drawer zoom controls
+  const sd = document.getElementById('zoom-slider-drawer');
+  const ld = document.getElementById('zoom-label-drawer');
+  if (sd) sd.value = currentZoom;
+  if (ld) ld.textContent = Math.round(currentZoom*100) + '%';
   applyZoom();
 }
 
@@ -4098,7 +4649,7 @@ function changeDeptName(id, name) {
   const dept = departments.find(d => d.id === id);
   if (!dept || !name.trim()) return;
   dept.name = name.trim();
-  if (id === currentDeptId) document.querySelector('.logo-sub').textContent = dept.name;
+  if (id === currentDeptId) document.getElementById('header-dept-name').textContent = dept.name;
   renderDeptTabs();
   saveLocal();
 }
@@ -4199,12 +4750,15 @@ async function init() {
   }
 
   // Update header subtitle
-  document.querySelector('.logo-sub').textContent = currentDept().name;
+  document.getElementById('header-dept-name').textContent = currentDept().name;
 
   // Ensure footerShifts initialized
   shiftTypes.forEach(st => {
     if (settings.footerShifts[st.id] === undefined) settings.footerShifts[st.id] = true;
   });
+
+  // Detect device layout and apply responsive mode
+  detectDeviceLayout();
 
   renderDeptTabs();
   render();
@@ -4244,6 +4798,8 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 // Keyboard shortcuts
 document.addEventListener('keydown', e => {
   const inInput = e.target.matches('input,textarea,select');
+  const inModal = !!document.querySelector('.modal-overlay.visible');
+
   if (e.key === 'Escape') {
     document.querySelectorAll('.modal-overlay.visible').forEach(m => m.classList.remove('visible'));
     document.getElementById('note-popup').classList.remove('visible');
@@ -4252,6 +4808,8 @@ document.addEventListener('keydown', e => {
     if (focusEmpId) clearFocusMode();
     if (navCell) { navCell = null; document.querySelectorAll('.kbnav-focus').forEach(el => el.classList.remove('kbnav-focus')); }
     if (wishMode) toggleWishMode();
+    if (selectedCells.size) clearMultiSel();
+    _kbBuffer = ''; document.getElementById('kb-buffer-toast').classList.remove('visible');
   }
   if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveAll(); }
   if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undoAction(); }
@@ -4270,7 +4828,17 @@ document.addEventListener('keydown', e => {
   // Keyboard navigation (arrow keys in table)
   if (!inInput && navCell && ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)) {
     e.preventDefault();
+    // Shift+Arrow: extend multi-selection
+    if (e.shiftKey) {
+      selectedCells.add(getSelKey(navCell.empId, navCell.ds));
+      updateMultiSelUI();
+    }
     moveNavCell(e.key);
+    if (e.shiftKey && navCell) {
+      selectedCells.add(getSelKey(navCell.empId, navCell.ds));
+      updateMultiSelUI();
+    }
+    return;
   }
 
   // Space = place selected shift on navCell
@@ -4287,22 +4855,39 @@ document.addEventListener('keydown', e => {
         shifts[navCell.empId][navCell.ds] = { type: selectedShift, note: cur?.note||'', swap: cur?.swap||false };
       }
       renderTable(); saveLocal();
+      moveNavCell('ArrowRight');
+    }
+    return;
+  }
+
+  // Delete key = clear navCell or selection
+  if (!inInput && (e.key === 'Delete' || e.key === 'Backspace') && !inModal) {
+    if (selectedCells.size > 0) { e.preventDefault(); clearShiftSelection(); return; }
+    if (navCell) {
+      e.preventDefault();
+      if (!editLocked) {
+        pushHistory();
+        if (shifts[navCell.empId]) delete shifts[navCell.empId][navCell.ds];
+        renderTable(); saveLocal();
+      }
+      return;
     }
   }
 
-  // Delete key = clear navCell
-  if (!inInput && (e.key === 'Delete' || e.key === 'Backspace') && navCell) {
-    e.preventDefault();
-    if (!editLocked) {
-      pushHistory();
-      if (shifts[navCell.empId]) delete shifts[navCell.empId][navCell.ds];
-      renderTable(); saveLocal();
-    }
+  // Single-char global shortcuts (only when not typing in input and no modal)
+  if (!inInput && !inModal && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    if (e.key === 'p' || e.key === 'P') { togglePanMode(); return; }
+    if (e.key === 'w' || e.key === 'W') { toggleWishMode(); return; }
+    if (e.key === 'f' || e.key === 'F') { toggleFilterBar(); return; }
   }
 
-  if (!inInput && (e.key === 'p' || e.key === 'P')) togglePanMode();
-  if (!inInput && (e.key === 'w' || e.key === 'W')) toggleWishMode();
-  if (!inInput && (e.key === 'f' || e.key === 'F')) toggleFilterBar();
+  // Keyboard input buffer for shift shortcuts (letter/digit keys, nav cell active)
+  if (!inInput && !inModal && !e.ctrlKey && !e.metaKey && !e.altKey && navCell) {
+    if (/^[a-zA-ZäöüÄÖÜß]$/.test(e.key)) {
+      e.preventDefault();
+      feedKbBuffer(e.key);
+    }
+  }
 });
 
 // =============================================================================
@@ -4673,7 +5258,86 @@ function exportCSV() {
   showToast(`⬇ CSV exportiert: Dienstplan_${monthName}_${currentYear}.csv`);
 }
 
+// =============================================================================
+// DEVICE / LAYOUT MANAGEMENT
+// =============================================================================
+const LAYOUTS = ['desktop', 'compact', 'tablet', 'mobile'];
+
+function detectDeviceLayout() {
+  // Don't override manual selection
+  if (document.body.dataset.layoutManual) return;
+  const w = window.innerWidth;
+  const hasTouch = navigator.maxTouchPoints > 1 || ('ontouchstart' in window);
+  let layout;
+  if (w >= 1400 && !hasTouch) layout = 'desktop';
+  else if (w >= 1100) layout = 'compact';
+  else if (w >= 800)  layout = 'tablet';
+  else                layout = 'mobile';
+  applyLayout(layout, false, true); // silent=true on auto-detect
+}
+
+function applyLayout(layout, manual, silent) {
+  document.body.dataset.layout = layout;
+  if (manual) {
+    document.body.dataset.layoutManual = '1';
+  } else {
+    delete document.body.dataset.layoutManual;
+  }
+  // Update toggle button icon
+  const btn = document.getElementById('layout-toggle-btn');
+  if (btn) btn.dataset.layout = layout;
+  // Show/hide overflow drawer trigger on mobile
+  const drawerBtn = document.getElementById('overflow-drawer-btn');
+  if (drawerBtn) drawerBtn.style.display = layout === 'mobile' ? 'flex' : 'none';
+  // Close drawer when switching away from mobile
+  if (layout !== 'mobile') closeOverflowDrawer();
+  // Sync undo/redo state in drawer
+  updateUndoRedoBtns();
+  if (!silent) {
+    showToast({
+      desktop: '🖥 Desktop-Ansicht',
+      compact: '💻 Kompakte Ansicht',
+      tablet:  '📱 Tablet-Ansicht',
+      mobile:  '📟 Mobil-Ansicht'
+    }[layout] || layout);
+  }
+}
+
+function cycleLayout() {
+  const current = document.body.dataset.layout || 'desktop';
+  const next = LAYOUTS[(LAYOUTS.indexOf(current) + 1) % LAYOUTS.length];
+  applyLayout(next, true);
+}
+
+function toggleOverflowDrawer() {
+  const drawer = document.getElementById('header-overflow-drawer');
+  drawer.classList.toggle('open');
+}
+function closeOverflowDrawer() {
+  document.getElementById('header-overflow-drawer')?.classList.remove('open');
+}
+
+// Listen for window resize → re-detect auto layout
+window.addEventListener('resize', () => {
+  if (!document.body.dataset.layoutManual) detectDeviceLayout();
+});
+
+
+
 init();
 </script>
+
+<!-- Multi-selection floating action bar -->
+<div id="multi-sel-bar" class="multi-sel-bar" style="display:none">
+  <span class="multi-sel-badge" id="multi-sel-count">0 Zellen</span>
+  <span style="color:rgba(255,255,255,0.5)">ausgewählt –</span>
+  <button class="multi-sel-action primary" onclick="applyShiftToSelection()">✓ Dienst eintragen</button>
+  <button class="multi-sel-action" onclick="clearShiftSelection()">⬜ Leeren</button>
+  <button class="multi-sel-action danger" onclick="deleteSelection()">🗑 Alle löschen</button>
+  <button class="multi-sel-action" onclick="clearMultiSel()" style="opacity:0.6" title="Auswahl aufheben (Esc)">✕</button>
+</div>
+
+<!-- Keyboard input buffer -->
+<div id="kb-buffer-toast"></div>
 </body>
 </html>

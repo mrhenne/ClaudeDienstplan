@@ -382,6 +382,108 @@ body::before {
 .save-btn:hover { box-shadow: 0 6px 20px rgba(91,127,255,0.55); transform: translateY(-1px); }
 
 /* ==========================================
+   DEPT TABS BAR
+   ========================================== */
+#dept-bar {
+  background: rgba(10,12,26,0.72);
+  backdrop-filter: var(--blur-sm);
+  border-bottom: 1px solid var(--header-border);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 4px;
+  height: 38px;
+  flex-shrink: 0;
+  z-index: 90;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+#dept-bar::-webkit-scrollbar { height: 3px; }
+#dept-bar::-webkit-scrollbar-thumb { background: rgba(130,140,180,0.3); }
+
+.dept-tab {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 12px;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  color: rgba(255,255,255,0.5);
+  white-space: nowrap;
+  transition: all 0.18s;
+  position: relative;
+  flex-shrink: 0;
+  user-select: none;
+}
+.dept-tab:hover { color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.07); }
+.dept-tab.active {
+  background: rgba(91,127,255,0.2);
+  border-color: rgba(91,127,255,0.45);
+  color: #a5baff;
+}
+.dept-tab-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dept-tab-unsaved {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #f59e0b;
+  flex-shrink: 0;
+  display: none;
+}
+.dept-tab.has-unsaved .dept-tab-unsaved { display: block; }
+
+.dept-tab-add {
+  padding: 4px 10px;
+  border-radius: 7px;
+  border: 1px dashed rgba(255,255,255,0.2);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  color: rgba(255,255,255,0.35);
+  white-space: nowrap;
+  transition: all 0.18s;
+  flex-shrink: 0;
+  background: transparent;
+}
+.dept-tab-add:hover { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.05); }
+
+.dept-bar-spacer { flex: 1; }
+
+.dept-manage-btn {
+  padding: 3px 9px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.4);
+  font-size: 10.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.18s;
+  flex-shrink: 0;
+}
+.dept-manage-btn:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); }
+
+/* Save button unsaved-dot indicator */
+.save-btn { position: relative; }
+.save-btn .unsaved-dot {
+  position: absolute;
+  top: -3px; right: -3px;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #f59e0b;
+  border: 2px solid var(--header-bg);
+  display: none;
+}
+body.has-unsaved .save-btn .unsaved-dot { display: block; }
+
+/* ==========================================
    MAIN LAYOUT
    ========================================== */
 #main {
@@ -1864,7 +1966,15 @@ body.wish-mode-on #wish-mode-btn { background: rgba(22,163,74,0.25) !important; 
 
   <button class="export-btn" onclick="printPDF()">📄 PDF</button>
   <button class="csv-btn" onclick="exportCSV()" title="Monatsplan als CSV exportieren (Excel-kompatibel)">⬇ CSV</button>
-  <button class="save-btn" onclick="saveAll()">💾 Sichern</button>
+  <button class="export-btn" onclick="openModal('modal-io')" title="Import / Export / Sichern">📦 Archiv</button>
+  <button class="save-btn" onclick="saveAll()">💾 Sichern<span class="unsaved-dot"></span></button>
+</div>
+
+<!-- ============================================================
+     DEPARTMENT TABS BAR
+     ============================================================ -->
+<div id="dept-bar">
+  <!-- filled by renderDeptTabs() -->
 </div>
 
 <!-- ============================================================
@@ -1899,6 +2009,98 @@ body.wish-mode-on #wish-mode-btn { background: rgba(22,163,74,0.25) !important; 
     </div>
   </div>
 
+</div>
+
+<!-- MODAL: IMPORT / EXPORT / ARCHIVE -->
+<div class="modal-overlay" id="modal-io">
+  <div class="modal" style="min-width:540px;max-width:640px">
+    <div class="modal-title">
+      📦 Archiv – Speichern · Import · Export
+      <button class="modal-close" onclick="closeModal('modal-io')">×</button>
+    </div>
+
+    <!-- SAVE -->
+    <div style="margin-bottom:18px;padding:14px;border-radius:10px;background:rgba(91,127,255,0.07);border:1px solid rgba(91,127,255,0.2)">
+      <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:8px;letter-spacing:0.5px">💾 LOKALER SPEICHERSTAND</div>
+      <div style="font-size:11.5px;color:var(--text2);margin-bottom:10px;line-height:1.6">
+        Alle Abteilungen werden automatisch im Browser gespeichert. Klicke <strong>Jetzt sichern</strong> um sicherzustellen, dass alle Änderungen gespeichert sind.
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button onclick="saveAll();closeModal('modal-io')" style="padding:8px 18px;border-radius:8px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;font-size:12px;font-weight:700;cursor:pointer">
+          💾 Jetzt sichern
+        </button>
+        <span id="io-save-status" style="font-size:11px;color:var(--text3)"></span>
+      </div>
+    </div>
+
+    <!-- EXPORT -->
+    <div style="margin-bottom:18px">
+      <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:6px;letter-spacing:0.5px;display:flex;align-items:center;gap:8px">
+        ⬇ EXPORTIEREN
+        <span style="font-size:10px;font-weight:500;color:var(--text3);background:var(--surface2);padding:2px 7px;border-radius:10px;font-family:monospace">.dpz</span>
+      </div>
+      <div style="font-size:11.5px;color:var(--text2);margin-bottom:10px;line-height:1.6">
+        Exportiert Dienstpläne als <code style="font-family:monospace;background:var(--surface2);padding:1px 5px;border-radius:3px">.dpz</code> Datei (JSON-Format). Extern speichern, teilen oder später wieder importieren.
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button onclick="exportPlan('current')" style="padding:8px 16px;border-radius:8px;border:none;background:linear-gradient(135deg,#10b981,#059669);color:white;font-size:12px;font-weight:700;cursor:pointer">
+          ⬇ Aktuelle Abteilung
+        </button>
+        <button onclick="exportPlan('all')" style="padding:8px 16px;border-radius:8px;border:1px solid var(--border);background:var(--glass2);color:var(--text);font-size:12px;font-weight:600;cursor:pointer">
+          ⬇ Vollsicherung (alle Abteilungen)
+        </button>
+      </div>
+    </div>
+
+    <div style="height:1px;background:var(--border);margin:4px 0 18px"></div>
+
+    <!-- IMPORT -->
+    <div>
+      <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:6px;letter-spacing:0.5px;display:flex;align-items:center;gap:8px">
+        ⬆ IMPORTIEREN
+        <span style="font-size:10px;font-weight:500;color:var(--text3);background:var(--surface2);padding:2px 7px;border-radius:10px;font-family:monospace">.dpz / .dienstplan</span>
+      </div>
+      <div style="font-size:11.5px;color:var(--text2);margin-bottom:12px;line-height:1.6">
+        Lädt eine <code style="font-family:monospace;background:var(--surface2);padding:1px 5px;border-radius:3px">.dpz</code> Datei und fügt die enthaltenen Abteilungen hinzu. Bestehende Daten bleiben erhalten.
+      </div>
+      <div id="io-drop-zone" style="border:2px dashed rgba(91,127,255,0.4);border-radius:12px;padding:28px;text-align:center;cursor:pointer;transition:all 0.2s;background:rgba(91,127,255,0.04)"
+        onclick="document.getElementById('io-file-input').click()"
+        ondragover="event.preventDefault();this.style.borderColor='rgba(91,127,255,0.8)';this.style.background='rgba(91,127,255,0.08)'"
+        ondragleave="this.style.borderColor='';this.style.background=''"
+        ondrop="event.preventDefault();this.style.borderColor='';this.style.background='';handleImportDrop(event)">
+        <div style="font-size:32px;margin-bottom:8px">📂</div>
+        <div style="font-size:13px;font-weight:600;color:var(--text2)">Datei hier ablegen oder klicken</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">.dpz · .dienstplan · .json</div>
+      </div>
+      <input type="file" id="io-file-input" accept=".dpz,.dienstplan,.json" style="display:none" onchange="handleImportFile(this)">
+      <div id="io-import-result" style="margin-top:12px;font-size:12px;padding:8px 12px;border-radius:8px;background:var(--glass2);display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: DEPARTMENT MANAGER -->
+<div class="modal-overlay" id="modal-depts">
+  <div class="modal" style="min-width:480px">
+    <div class="modal-title">
+      🏥 Abteilungen verwalten
+      <button class="modal-close" onclick="closeModal('modal-depts')">×</button>
+    </div>
+    <div id="dept-list-container" style="margin-bottom:16px"></div>
+    <div style="border-top:1px solid var(--border);padding-top:14px">
+      <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px">➕ Neue Abteilung</div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <input id="new-dept-name" type="text" placeholder="Name (z.B. Station A1)" maxlength="40"
+          style="flex:1;min-width:140px;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--glass2);color:var(--text);font-size:12px;outline:none"
+          onkeydown="if(event.key==='Enter')addDepartment()">
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2)">
+          Farbe: <input id="new-dept-color" type="color" value="#5b7fff" style="width:32px;height:28px;border:none;background:transparent;cursor:pointer">
+        </div>
+        <button onclick="addDepartment()" style="padding:7px 14px;border-radius:8px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;font-size:12px;font-weight:700;cursor:pointer">
+          ➕ Hinzufügen
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- MODAL: COPY MONTH -->
@@ -2061,65 +2263,267 @@ body.wish-mode-on #wish-mode-btn { background: rgba(22,163,74,0.25) !important; 
 // STATE
 // =============================================================================
 let currentYear = new Date().getFullYear();
-let currentMonth = new Date().getMonth(); // 0-indexed
-let currentView = 'month'; // 'month' | 'week'
-let currentWeek = 1; // 1-based week within month
+let currentMonth = new Date().getMonth();
+let currentView = 'month';
+let currentWeek = 1;
 let currentZoom = 1;
 let editLocked = false;
 let darkMode = false;
 let selectedShift = 'FD';
-let contextTarget = null; // {empId, dateStr}
-let focusEmpId    = null; // currently focused employee (highlight mode)
-let panModeActive = false; // drag-to-pan toggle
+let contextTarget = null;
+let focusEmpId    = null;
+let panModeActive = false;
+let wishes    = {};
+let wishMode  = false;
+let cellClipboard = null;
+let navCell = null;
+let empFilter = '';
 
-// Wunsch/Sperr-Ebene
-let wishes    = {}; // { empId: { ds: 'wish'|'block' } } – persistent
-let wishMode  = false; // toggle
-
-// Zellen-Zwischenablage
-let cellClipboard = null; // { type, note }
-
-// Tastatur-Navigation
-let navCell = null; // { empId, ds } – currently keyboard-focused cell
-
-// Mitarbeiter-Filter
-let empFilter = ''; // text filter
+// =============================================================================
+// UNSAVED INDICATOR
+// =============================================================================
+let _hasUnsaved = false;
+function markUnsaved() {
+  _hasUnsaved = true;
+  document.body.classList.add('has-unsaved');
+  const tab = document.querySelector('.dept-tab.active');
+  if (tab) tab.classList.add('has-unsaved');
+}
+function clearUnsaved() {
+  _hasUnsaved = false;
+  document.body.classList.remove('has-unsaved');
+  document.querySelectorAll('.dept-tab').forEach(t => t.classList.remove('has-unsaved'));
+}
 
 // =============================================================================
 // UNDO / REDO
 // =============================================================================
 const MAX_HISTORY = 50;
-let undoStack = []; // array of JSON strings of `shifts`
+let undoStack = [];
 let redoStack = [];
 
 function pushHistory() {
   undoStack.push(JSON.stringify(shifts));
   if (undoStack.length > MAX_HISTORY) undoStack.shift();
-  redoStack = []; // clear redo on new action
+  redoStack = [];
   updateUndoRedoBtns();
+  markUnsaved();
 }
-
 function undoAction() {
   if (!undoStack.length) return;
   redoStack.push(JSON.stringify(shifts));
   shifts = JSON.parse(undoStack.pop());
   updateUndoRedoBtns();
   renderTable(); saveLocal();
-  showToast('↩ Rückgängig');
+  showToast('\u21a9 R\u00fckg\u00e4ngig');
 }
-
 function redoAction() {
   if (!redoStack.length) return;
   undoStack.push(JSON.stringify(shifts));
   shifts = JSON.parse(redoStack.pop());
   updateUndoRedoBtns();
   renderTable(); saveLocal();
-  showToast('↪ Wiederholt');
+  showToast('\u21aa Wiederholt');
 }
-
 function updateUndoRedoBtns() {
   document.getElementById('undo-btn').disabled = undoStack.length === 0;
   document.getElementById('redo-btn').disabled = redoStack.length === 0;
+}
+
+// =============================================================================
+// DEPARTMENT MANAGEMENT
+// =============================================================================
+const DEPT_COLORS = ['#5b7fff','#f97316','#10b981','#d946ef','#e11d48','#0ea5e9','#a78bfa','#f59e0b'];
+const DEFAULT_SHIFT_TYPES = [
+  { id: 'FD', label: 'FD', name: 'Fr\u00fcdienst',    hours: 7.7, color: '#ffffff', bg: '#0ea5e9' },
+  { id: 'SD', label: 'SD', name: 'Sp\u00e4tdienst',   hours: 7.7, color: '#ffffff', bg: '#d946ef' },
+  { id: 'ND', label: 'ND', name: 'Nachtdienst',       hours: 10,  color: '#ffffff', bg: '#f97316' },
+  { id: 'ZD', label: 'ZD', name: 'Zwischendienst',    hours: 7.7, color: '#ffffff', bg: '#7c3aed' },
+  { id: 'ST', label: 'ST', name: 'Sp\u00e4tteam',     hours: 7.7, color: '#ffffff', bg: '#2563eb' },
+  { id: 'U',  label: 'U',  name: 'Urlaub',            hours: 0,   color: '#92400e', bg: '#fef3c7' },
+  { id: 'K',  label: 'K',  name: 'Krank',             hours: 0,   color: '#ffffff', bg: '#ef4444' },
+  { id: 'LT', label: 'LT', name: 'Langzeit',          hours: 7.7, color: '#ffffff', bg: '#10b981' },
+  { id: 'X',  label: 'X',  name: 'Frei',              hours: 0,   color: '#64748b', bg: '#f1f5f9' },
+];
+const DEFAULT_EMPLOYEES = [
+  { id: 'e1',  name: 'ADAMS, HENDRIK',      role: 'Stationsleitung', vz: 100, vmt: 0 },
+  { id: 'e2',  name: 'FUCHSA, JENNIFER',    role: 'Stellv. Leitung', vz: 100, vmt: 0 },
+  { id: 'e3',  name: 'G\u00dcNTER, STEPHANIE', role: 'Fachkraft',   vz: 100, vmt: 0 },
+  { id: 'e4',  name: 'BLANK, ALEXANDRA',    role: 'Fachkraft',       vz: 100, vmt: 0 },
+  { id: 'e5',  name: 'FRIEDRICH, KRISTINA', role: 'Pflegekraft',     vz: 100, vmt: 0 },
+  { id: 'e6',  name: 'WEIENBERG, HANNA',    role: 'Fachkraft',       vz: 100, vmt: 0 },
+  { id: 'e7',  name: 'HACKMANN, MATTHIAS',  role: 'Fachkraft',       vz: 90,  vmt: 0 },
+  { id: 'e8',  name: 'BUCHM\u00dcLLER, J\u00d6RG', role: 'Fachkraft', vz: 100, vmt: 0 },
+  { id: 'e9',  name: 'R\u00d6SKEN, KATRIN', role: 'Pflegekraft',     vz: 100, vmt: 0 },
+  { id: 'e10', name: 'THEISSEN, JENNIFER',  role: 'Pflegekraft',     vz: 100, vmt: 0 },
+  { id: 'e11', name: 'DANIELS, JUSTIN',     role: 'Pflegekraft',     vz: 100, vmt: 0 },
+  { id: 'e12', name: 'KAYMAZ, MELDA',       role: 'Pflegekraft',     vz: 100, vmt: 0 },
+  { id: 'e13', name: 'K\u00dcHN, PHILIPP',  role: 'Pflegekraft',     vz: 100, vmt: 0 },
+  { id: 'e14', name: 'STRACHANSKI, JULIA',  role: 'Pflegekraft',     vz: 100, vmt: 0 },
+  { id: 'e15', name: 'PREUSSNER, PAULINE',  role: 'Pflegekraft',     vz: 100, vmt: 0 },
+  { id: 'e16', name: 'BIELOK, LARA',        role: 'Pflegekraft',     vz: 100, vmt: 0 },
+  { id: 'e17', name: 'W\u00dcSTKAMP, BIANCA', role: 'Pflegekraft',   vz: 100, vmt: 0 },
+  { id: 'e18', name: 'BONDZAU, MARTINA',    role: 'Pflegekraft',     vz: 100, vmt: 0 },
+];
+
+function makeDefaultDept(id, name, color) {
+  return {
+    id, name, color,
+    employees:  JSON.parse(JSON.stringify(DEFAULT_EMPLOYEES)),
+    shifts:     {},
+    shiftTypes: JSON.parse(JSON.stringify(DEFAULT_SHIFT_TYPES)),
+    settings:   { cols:{vz:true,soll:true,ist:true,diff:true,vmt:true}, footerShifts:{}, hourFactor:7.7 },
+    wishes:     {}
+  };
+}
+
+let departments   = [ makeDefaultDept('dept_1', 'Station A3', DEPT_COLORS[0]) ];
+let currentDeptId = 'dept_1';
+
+function currentDept() {
+  return departments.find(d => d.id === currentDeptId) || departments[0];
+}
+function saveDeptState(dept) {
+  dept.employees  = JSON.parse(JSON.stringify(employees));
+  dept.shifts     = JSON.parse(JSON.stringify(shifts));
+  dept.shiftTypes = JSON.parse(JSON.stringify(shiftTypes));
+  dept.settings   = JSON.parse(JSON.stringify(settings));
+  dept.wishes     = JSON.parse(JSON.stringify(wishes));
+}
+function loadDeptState(dept) {
+  employees  = JSON.parse(JSON.stringify(dept.employees  || DEFAULT_EMPLOYEES));
+  shifts     = JSON.parse(JSON.stringify(dept.shifts     || {}));
+  shiftTypes = JSON.parse(JSON.stringify(dept.shiftTypes || DEFAULT_SHIFT_TYPES));
+  wishes     = JSON.parse(JSON.stringify(dept.wishes     || {}));
+  settings   = Object.assign(
+    { cols:{vz:true,soll:true,ist:true,diff:true,vmt:true}, footerShifts:{}, hourFactor:7.7 },
+    JSON.parse(JSON.stringify(dept.settings || {}))
+  );
+  shiftTypes.forEach(st => { if (settings.footerShifts[st.id] === undefined) settings.footerShifts[st.id] = true; });
+}
+
+function switchDept(id) {
+  if (id === currentDeptId) return;
+  saveDeptState(currentDept());
+  saveLocal();
+  currentDeptId = id;
+  const dept = currentDept();
+  loadDeptState(dept);
+  document.querySelector('.logo-sub').textContent = dept.name;
+  undoStack = []; redoStack = [];
+  updateUndoRedoBtns();
+  clearUnsaved();
+  renderDeptTabs();
+  render();
+  showToast('\ud83d\udcc2 ' + dept.name);
+}
+
+function addDept() {
+  const name = prompt('Name der neuen Abteilung:', 'Neue Station');
+  if (!name || !name.trim()) return;
+  const id = 'dept_' + Date.now();
+  const color = DEPT_COLORS[departments.length % DEPT_COLORS.length];
+  const newDept = {
+    id, name: name.trim(), color,
+    employees: [], shifts: {},
+    shiftTypes: JSON.parse(JSON.stringify(DEFAULT_SHIFT_TYPES)),
+    settings: { cols:{vz:true,soll:true,ist:true,diff:true,vmt:true}, footerShifts:{}, hourFactor:7.7 },
+    wishes: {}
+  };
+  DEFAULT_SHIFT_TYPES.forEach(st => { newDept.settings.footerShifts[st.id] = true; });
+  saveDeptState(currentDept());
+  departments.push(newDept);
+  saveLocal();
+  switchDept(id);
+}
+
+function renameDept(id) {
+  const dept = departments.find(d => d.id === id);
+  if (!dept) return;
+  const name = prompt('Neuer Name:', dept.name);
+  if (!name || !name.trim()) return;
+  dept.name = name.trim();
+  if (id === currentDeptId) document.querySelector('.logo-sub').textContent = dept.name;
+  renderDeptTabs(); saveLocal();
+  showToast('\u270f\ufe0f Umbenannt');
+}
+
+function deleteDept(id) {
+  if (departments.length <= 1) { showToast('\u26a0\ufe0f Mindestens eine Abteilung n\u00f6tig'); return; }
+  const dept = departments.find(d => d.id === id);
+  if (!confirm('Abteilung "' + (dept ? dept.name : '') + '" wirklich l\u00f6schen?\nAlle Dienstplandaten gehen unwiderruflich verloren!')) return;
+  departments = departments.filter(d => d.id !== id);
+  if (currentDeptId === id) {
+    currentDeptId = departments[0].id;
+    loadDeptState(departments[0]);
+    document.querySelector('.logo-sub').textContent = departments[0].name;
+    render();
+  }
+  renderDeptTabs(); saveLocal();
+  showToast('\ud83d\uddd1\ufe0f Abteilung gel\u00f6scht');
+}
+
+function changeDeptColor(id) {
+  const dept = departments.find(d => d.id === id);
+  if (!dept) return;
+  const inp = document.createElement('input');
+  inp.type = 'color'; inp.value = dept.color;
+  inp.onchange = () => { dept.color = inp.value; renderDeptTabs(); saveLocal(); };
+  inp.click();
+}
+
+function renderDeptTabs() {
+  const bar = document.getElementById('dept-bar');
+  if (!bar) return;
+  let html = '';
+  departments.forEach(dept => {
+    const isActive = dept.id === currentDeptId;
+    html += '<div class="dept-tab' + (isActive ? ' active' : '') + '"'
+      + ' onclick="switchDept(\'' + dept.id + '\')"'
+      + ' ondblclick="renameDept(\'' + dept.id + '\')"'
+      + ' title="Klick: wechseln  \u2022  Doppelklick: umbenennen  \u2022  Rechtsklick: Optionen"'
+      + ' oncontextmenu="showDeptMenu(event,\'' + dept.id + '\')">'
+      + '<div class="dept-tab-dot" style="background:' + dept.color + '"></div>'
+      + '<span>' + escapeHTML(dept.name) + '</span>'
+      + '<div class="dept-tab-unsaved" title="Ungespeicherte \u00c4nderungen"></div>'
+      + '</div>';
+  });
+  html += '<div class="dept-bar-spacer"></div>';
+  html += '<button class="dept-tab-add" onclick="addDept()" title="Neue Abteilung anlegen">\uff0b Abteilung</button>';
+  html += '<button class="dept-manage-btn" onclick="openModal(\'modal-io\')" title="Speichern \u00b7 Import \u00b7 Export">\ud83d\udce6 Archiv</button>';
+  bar.innerHTML = html;
+}
+
+let _deptMenuEl = null;
+function showDeptMenu(e, deptId) {
+  e.preventDefault(); e.stopPropagation();
+  if (_deptMenuEl) { _deptMenuEl.remove(); _deptMenuEl = null; }
+  const menu = document.createElement('div');
+  menu.style.cssText = 'position:fixed;left:' + Math.min(e.clientX, window.innerWidth - 210) + 'px;top:' + (e.clientY + 4) + 'px;z-index:9000;'
+    + 'background:rgba(14,16,34,0.97);border:1px solid rgba(255,255,255,0.12);border-radius:10px;'
+    + 'padding:5px 0;box-shadow:0 8px 32px rgba(0,0,0,0.55);min-width:208px;backdrop-filter:blur(16px)';
+  const items = [
+    ['\u270f\ufe0f Umbenennen', 'renameDept(\'' + deptId + '\')'],
+    ['\ud83c\udfa8 Farbe \u00e4ndern', 'changeDeptColor(\'' + deptId + '\')'],
+    null,
+    ['\u2b07 Abteilung exportieren (.dpz)', 'exportDept(\'' + deptId + '\')'],
+    ['\ud83d\udce6 Archiv \u00f6ffnen', 'openModal(\'modal-io\')'],
+    null,
+    ['\ud83d\uddd1\ufe0f Abteilung l\u00f6schen', 'deleteDept(\'' + deptId + '\')', '#f87171'],
+  ];
+  items.forEach(item => {
+    if (!item) { const d = document.createElement('div'); d.className = 'ctx-divider'; menu.appendChild(d); return; }
+    const el = document.createElement('div');
+    el.className = 'ctx-item';
+    el.textContent = item[0];
+    if (item[2]) el.style.color = item[2];
+    el.onclick = () => { menu.remove(); _deptMenuEl = null; new Function(item[1])(); };
+    menu.appendChild(el);
+  });
+  document.body.appendChild(menu);
+  _deptMenuEl = menu;
+  const cleanup = (ev) => { if (!menu.contains(ev.target)) { menu.remove(); _deptMenuEl = null; document.removeEventListener('click', cleanup); } };
+  setTimeout(() => document.addEventListener('click', cleanup), 60);
 }
 
 let settings = {
@@ -2127,39 +2531,8 @@ let settings = {
   footerShifts: {},
   hourFactor: 7.7
 };
-
-let shiftTypes = [
-  { id: 'FD', label: 'FD', name: 'Frühdienst',   hours: 7.7, color: '#ffffff', bg: '#0ea5e9' },
-  { id: 'SD', label: 'SD', name: 'Spätdienst',   hours: 7.7, color: '#ffffff', bg: '#d946ef' },
-  { id: 'ND', label: 'ND', name: 'Nachtdienst',  hours: 10,  color: '#ffffff', bg: '#f97316' },
-  { id: 'ZD', label: 'ZD', name: 'Zwischendienst',hours: 7.7,color: '#ffffff', bg: '#7c3aed' },
-  { id: 'ST', label: 'ST', name: 'Spätteam',     hours: 7.7, color: '#ffffff', bg: '#2563eb' },
-  { id: 'U',  label: 'U',  name: 'Urlaub',        hours: 0,   color: '#92400e', bg: '#fef3c7' },
-  { id: 'K',  label: 'K',  name: 'Krank',         hours: 0,   color: '#ffffff', bg: '#ef4444' },
-  { id: 'LT', label: 'LT', name: 'Langzeit',      hours: 7.7, color: '#ffffff', bg: '#10b981' },
-  { id: 'X',  label: 'X',  name: 'Frei',          hours: 0,   color: '#64748b', bg: '#f1f5f9' },
-];
-
-let employees = [
-  { id: 'e1',  name: 'ADAMS, HENDRIK',     role: 'Stationsleitung',  vz: 100, vmt: 0 },
-  { id: 'e2',  name: 'FUCHSA, JENNIFER',   role: 'Stellv. Leitung',  vz: 100, vmt: 0 },
-  { id: 'e3',  name: 'GÜNTER, STEPHANIE',  role: 'Fachkraft',        vz: 100, vmt: 0 },
-  { id: 'e4',  name: 'BLANK, ALEXANDRA',   role: 'Fachkraft',        vz: 100, vmt: 0 },
-  { id: 'e5',  name: 'FRIEDRICH, KRISTINA',role: 'Pflegekraft',      vz: 100, vmt: 0 },
-  { id: 'e6',  name: 'WEIENBERG, HANNA',   role: 'Fachkraft',        vz: 100, vmt: 0 },
-  { id: 'e7',  name: 'HACKMANN, MATTHIAS', role: 'Fachkraft',        vz: 90,  vmt: 0 },
-  { id: 'e8',  name: 'BUCHMÜLLER, JÖRG',   role: 'Fachkraft',        vz: 100, vmt: 0 },
-  { id: 'e9',  name: 'RÖSKEN, KATRIN',     role: 'Pflegekraft',      vz: 100, vmt: 0 },
-  { id: 'e10', name: 'THEISSEN, JENNIFER', role: 'Pflegekraft',      vz: 100, vmt: 0 },
-  { id: 'e11', name: 'DANIELS, JUSTIN',    role: 'Pflegekraft',      vz: 100, vmt: 0 },
-  { id: 'e12', name: 'KAYMAZ, MELDA',      role: 'Pflegekraft',      vz: 100, vmt: 0 },
-  { id: 'e13', name: 'KÜHN, PHILIPP',      role: 'Pflegekraft',      vz: 100, vmt: 0 },
-  { id: 'e14', name: 'STRACHANSKI, JULIA', role: 'Pflegekraft',      vz: 100, vmt: 0 },
-  { id: 'e15', name: 'PREUSSNER, PAULINE', role: 'Pflegekraft',      vz: 100, vmt: 0 },
-  { id: 'e16', name: 'BIELOK, LARA',       role: 'Pflegekraft',      vz: 100, vmt: 0 },
-  { id: 'e17', name: 'WÜSTKAMP, BIANCA',   role: 'Pflegekraft',      vz: 100, vmt: 0 },
-  { id: 'e18', name: 'BONDZAU, MARTINA',   role: 'Pflegekraft',      vz: 100, vmt: 0 },
-];
+let shiftTypes = JSON.parse(JSON.stringify(DEFAULT_SHIFT_TYPES));
+let employees  = JSON.parse(JSON.stringify(DEFAULT_EMPLOYEES));
 
 // shifts[empId][dateStr] = {type:'FD', note:''}
 let shifts = {};
@@ -3474,42 +3847,289 @@ function escapeHTML(str) {
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// =============================================================================
-// PERSISTENCE – LOCAL STORAGE
-// =============================================================================
-const LS_KEY = 'dienstplan-pro-data';
 
-function getState() {
-  return { employees, shifts, shiftTypes, settings, darkMode, currentYear, currentMonth, currentZoom, wishes };
+// =============================================================================
+// PERSISTENCE – LOCAL STORAGE  (v2: all departments in one key)
+// =============================================================================
+const LS_KEY = 'dienstplan-pro-v2';
+
+function getFullState() {
+  // Always snapshot current working vars into active dept first
+  saveDeptState(currentDept());
+  return {
+    version: 2,
+    departments,
+    currentDeptId,
+    darkMode,
+    currentZoom,
+    currentYear,
+    currentMonth
+  };
 }
 
 function saveLocal() {
   try {
-    localStorage.setItem(LS_KEY, JSON.stringify(getState()));
-  } catch(e) {}
+    localStorage.setItem(LS_KEY, JSON.stringify(getFullState()));
+    clearUnsaved();
+  } catch(e) { console.warn('saveLocal failed', e); }
 }
 
 function loadLocal() {
   try {
+    // Try v2 format
     const raw = localStorage.getItem(LS_KEY);
-    if (!raw) return false;
-    const d = JSON.parse(raw);
-    if (d.employees) employees = d.employees;
-    if (d.shifts)    shifts    = d.shifts;
-    if (d.shiftTypes) shiftTypes = d.shiftTypes;
-    if (d.settings)  settings  = { ...settings, ...d.settings };
-    if (d.wishes)    wishes    = d.wishes;
-    if (d.darkMode !== undefined) {
-      darkMode = d.darkMode;
-      document.body.dataset.theme = darkMode ? 'dark' : 'light';
-      document.getElementById('theme-btn').textContent = darkMode ? '☀️' : '🌙';
+    if (raw) {
+      const d = JSON.parse(raw);
+      if (d.version === 2 && d.departments && d.departments.length) {
+        departments   = d.departments;
+        currentDeptId = d.currentDeptId && departments.find(x => x.id === d.currentDeptId)
+          ? d.currentDeptId : departments[0].id;
+        loadDeptState(currentDept());
+        if (d.darkMode !== undefined) {
+          darkMode = d.darkMode;
+          document.body.dataset.theme = darkMode ? 'dark' : 'light';
+          const tb = document.getElementById('theme-btn');
+          if (tb) tb.textContent = darkMode ? '\u2600\ufe0f' : '\ud83c\udf19';
+        }
+        if (d.currentZoom) { currentZoom = d.currentZoom; }
+        if (d.currentYear  !== undefined) currentYear  = d.currentYear;
+        if (d.currentMonth !== undefined) currentMonth = d.currentMonth;
+        return true;
+      }
     }
-    if (d.currentZoom) { currentZoom = d.currentZoom; setZoom(currentZoom); }
-    return true;
-  } catch(e) { return false; }
+    // Fallback: try v1 per-dept format (dienstplan-departments + dienstplan-dept-*)
+    const deptsRaw = localStorage.getItem('dienstplan-departments');
+    if (deptsRaw) {
+      const depts = JSON.parse(deptsRaw);
+      if (depts && depts.length) {
+        departments = depts.map(dept => {
+          const dKey = 'dienstplan-dept-' + dept.id;
+          const dRaw = localStorage.getItem(dKey);
+          const data = dRaw ? JSON.parse(dRaw) : {};
+          return Object.assign({ employees:[], shifts:{}, shiftTypes:JSON.parse(JSON.stringify(DEFAULT_SHIFT_TYPES)),
+            settings:{cols:{vz:true,soll:true,ist:true,diff:true,vmt:true},footerShifts:{},hourFactor:7.7}, wishes:{} },
+            { id: dept.id, name: dept.name, color: dept.color },
+            { employees: data.employees || [], shifts: data.shifts || {},
+              shiftTypes: data.shiftTypes || JSON.parse(JSON.stringify(DEFAULT_SHIFT_TYPES)),
+              settings: data.settings || {}, wishes: data.wishes || {} });
+        });
+        const savedCurrent = localStorage.getItem('dienstplan-current-dept');
+        currentDeptId = savedCurrent && departments.find(x => x.id === savedCurrent)
+          ? savedCurrent : departments[0].id;
+        loadDeptState(currentDept());
+        saveLocal(); // upgrade to v2
+        showToast('\u2705 Daten aus v1 migriert');
+        return true;
+      }
+    }
+    // Fallback: try original single-dept format
+    const oldRaw = localStorage.getItem('dienstplan-pro-data');
+    if (oldRaw) {
+      const d = JSON.parse(oldRaw);
+      const migrated = makeDefaultDept('dept_1', 'Station A3', DEPT_COLORS[0]);
+      if (d.employees)  migrated.employees  = d.employees;
+      if (d.shifts)     migrated.shifts     = d.shifts;
+      if (d.shiftTypes) migrated.shiftTypes = d.shiftTypes;
+      if (d.settings)   Object.assign(migrated.settings, d.settings);
+      if (d.wishes)     migrated.wishes     = d.wishes;
+      departments   = [migrated];
+      currentDeptId = 'dept_1';
+      loadDeptState(migrated);
+      if (d.darkMode !== undefined) { darkMode = d.darkMode; }
+      if (d.currentZoom) currentZoom = d.currentZoom;
+      saveLocal();
+      showToast('\u2705 Daten aus Altversion migriert');
+      return true;
+    }
+    return false;
+  } catch(e) { console.warn('loadLocal error', e); return false; }
 }
 
 // =============================================================================
+// EXPORT / IMPORT (.dpz – Dienstplan Zip/JSON bundle)
+// =============================================================================
+const DPZ_VERSION = '2.0';
+const DPZ_MIME    = 'application/json';
+
+function exportDept(deptId) {
+  // Save current state first
+  saveDeptState(currentDept());
+  const dept = departments.find(d => d.id === deptId);
+  if (!dept) return;
+  const bundle = {
+    version:    DPZ_VERSION,
+    app:        'Dienstplan PRO',
+    exportedAt: new Date().toISOString(),
+    type:       'single',
+    departments: [JSON.parse(JSON.stringify(dept))]
+  };
+  const safe = dept.name.replace(/[^a-z0-9\u00e4\u00f6\u00fc\u00df_\-]/gi, '_');
+  const filename = 'DienstplanPRO_' + safe + '_' + new Date().toISOString().slice(0,10) + '.dpz';
+  downloadJSON(bundle, filename);
+  showToast('\u2b07 Exportiert: ' + dept.name);
+}
+
+function exportPlan(mode) {
+  saveDeptState(currentDept());
+  const ids = mode === 'all' ? departments.map(d => d.id) : [currentDeptId];
+  const bundle = {
+    version:    DPZ_VERSION,
+    app:        'Dienstplan PRO',
+    exportedAt: new Date().toISOString(),
+    type:       mode === 'all' ? 'full-backup' : 'single',
+    departments: departments.filter(d => ids.includes(d.id)).map(d => JSON.parse(JSON.stringify(d)))
+  };
+  const filename = mode === 'all'
+    ? 'DienstplanPRO_Vollsicherung_' + new Date().toISOString().slice(0,10) + '.dpz'
+    : 'DienstplanPRO_' + (currentDept().name).replace(/[^a-z0-9\u00e4\u00f6\u00fc\u00df_\-]/gi,'_') + '_' + new Date().toISOString().slice(0,10) + '.dpz';
+  downloadJSON(bundle, filename);
+  showToast('\u2b07 ' + bundle.departments.length + ' Abteilung(en) exportiert');
+}
+
+function downloadJSON(obj, filename) {
+  const blob = new Blob([JSON.stringify(obj, null, 2)], { type: DPZ_MIME });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function handleImportDrop(e) {
+  const file = e.dataTransfer?.files?.[0];
+  if (file) processImportFile(file);
+}
+function handleImportFile(input) {
+  const file = input.files?.[0];
+  if (file) processImportFile(file);
+  input.value = '';
+}
+
+function processImportFile(file) {
+  const resultEl = document.getElementById('io-import-result');
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const bundle = JSON.parse(ev.target.result);
+      // Accept both old .dienstplan format and new .dpz format
+      if (!bundle.departments || !Array.isArray(bundle.departments) || !bundle.departments.length) {
+        showImportResult(false, '\u274c Ungültiges Format – keine Abteilungen gefunden.');
+        return;
+      }
+      saveDeptState(currentDept());
+      let added = 0;
+      bundle.departments.forEach(d => {
+        const newId = 'dept_' + Date.now() + '_' + Math.random().toString(36).slice(2,5);
+        // Avoid name collisions
+        let finalName = d.name || 'Importiert';
+        let suffix = 1;
+        while (departments.find(dep => dep.name === finalName)) {
+          finalName = (d.name || 'Importiert') + ' (' + (++suffix) + ')';
+        }
+        departments.push({
+          id:         newId,
+          name:       finalName,
+          color:      d.color || DEPT_COLORS[departments.length % DEPT_COLORS.length],
+          employees:  d.employees  || [],
+          shifts:     d.shifts     || {},
+          shiftTypes: d.shiftTypes || JSON.parse(JSON.stringify(DEFAULT_SHIFT_TYPES)),
+          settings:   d.settings   || { cols:{vz:true,soll:true,ist:true,diff:true,vmt:true}, footerShifts:{}, hourFactor:7.7 },
+          wishes:     d.wishes     || {}
+        });
+        added++;
+      });
+      saveLocal();
+      renderDeptTabs();
+      renderDeptList();
+      showImportResult(true, '\u2705 ' + added + ' Abteilung(en) erfolgreich importiert!');
+      showToast('\ud83d\udce6 ' + added + ' Abteilung(en) importiert');
+    } catch(err) {
+      showImportResult(false, '\u274c Fehler: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+function showImportResult(ok, msg) {
+  const el = document.getElementById('io-import-result');
+  if (!el) return;
+  el.style.display = 'block';
+  el.style.color = ok ? '#34d399' : '#f87171';
+  el.textContent = msg;
+}
+
+// Render dept list inside modal-depts
+function renderDeptList() {
+  const container = document.getElementById('dept-list-container');
+  if (!container) return;
+  saveDeptState(currentDept());
+  let html = '<div style="display:flex;flex-direction:column;gap:8px">';
+  departments.forEach(dept => {
+    const isCurrent = dept.id === currentDeptId;
+    const shiftCount = Object.values(dept.shifts || {}).reduce((n, v) => n + Object.keys(v).length, 0);
+    const empCount   = (dept.employees || []).length;
+    html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;border:1px solid '
+      + (isCurrent ? 'rgba(91,127,255,0.4)' : 'var(--border)') + ';background:'
+      + (isCurrent ? 'rgba(91,127,255,0.07)' : 'var(--glass2)') + '">';
+    html += '<input type="color" value="' + dept.color + '" title="Farbe" onchange="changeDeptColor(\'' + dept.id + '\')" style="width:28px;height:28px;border:none;background:transparent;cursor:pointer;border-radius:50%;flex-shrink:0">';
+    html += '<div style="flex:1;min-width:0">';
+    html += '<input type="text" value="' + escapeHTML(dept.name) + '" title="Name (Enter zum Bestätigen)"'
+      + ' onblur="changeDeptName(\'' + dept.id + '\',this.value)"'
+      + ' onkeydown="if(event.key===\'Enter\')this.blur()"'
+      + ' style="width:100%;padding:4px 7px;border-radius:6px;border:1px solid var(--border);background:var(--glass2);color:var(--text);font-size:12px;font-weight:600;outline:none">';
+    html += '<div style="font-size:10px;color:var(--text3);margin-top:3px">' + empCount + ' MA &nbsp;·&nbsp; ' + shiftCount + ' Einträge</div>';
+    html += '</div>';
+    if (isCurrent) {
+      html += '<span style="font-size:10px;color:var(--accent);font-weight:700;padding:2px 8px;background:rgba(91,127,255,0.15);border-radius:10px;white-space:nowrap">AKTIV</span>';
+    } else {
+      html += '<button onclick="switchDept(\'' + dept.id + '\');closeModal(\'modal-depts\')" '
+        + 'style="padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:var(--glass2);color:var(--text2);font-size:11px;cursor:pointer;white-space:nowrap">Öffnen</button>';
+    }
+    html += '<button onclick="exportDept(\'' + dept.id + '\')" title="Abteilung exportieren (.dpz)"'
+      + ' style="padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--glass2);color:var(--text2);font-size:11px;cursor:pointer;flex-shrink:0">⬇</button>';
+    html += '<button onclick="deleteDept(\'' + dept.id + '\')" title="Abteilung löschen"'
+      + ' style="padding:4px 8px;border-radius:6px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.1);color:#f87171;font-size:12px;cursor:pointer;flex-shrink:0">🗑</button>';
+    html += '</div>';
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function changeDeptName(id, name) {
+  const dept = departments.find(d => d.id === id);
+  if (!dept || !name.trim()) return;
+  dept.name = name.trim();
+  if (id === currentDeptId) document.querySelector('.logo-sub').textContent = dept.name;
+  renderDeptTabs();
+  saveLocal();
+}
+
+// addDepartment is wired to the modal-depts form
+function addDepartment() {
+  const nameEl  = document.getElementById('new-dept-name');
+  const colorEl = document.getElementById('new-dept-color');
+  const name    = (nameEl ? nameEl.value : '').trim();
+  const color   = colorEl ? colorEl.value : DEPT_COLORS[departments.length % DEPT_COLORS.length];
+  if (!name) { if (nameEl) nameEl.focus(); return; }
+  const id      = 'dept_' + Date.now();
+  const newDept = {
+    id, name, color,
+    employees:  [],
+    shifts:     {},
+    shiftTypes: JSON.parse(JSON.stringify(DEFAULT_SHIFT_TYPES)),
+    settings:   { cols:{vz:true,soll:true,ist:true,diff:true,vmt:true}, footerShifts:{}, hourFactor:7.7 },
+    wishes:     {}
+  };
+  DEFAULT_SHIFT_TYPES.forEach(st => { newDept.settings.footerShifts[st.id] = true; });
+  saveDeptState(currentDept());
+  departments.push(newDept);
+  if (nameEl) nameEl.value = '';
+  saveLocal();
+  renderDeptTabs();
+  renderDeptList();
+  showToast('\u2705 Abteilung "' + name + '" angelegt');
+}
+
+
 // PERSISTENCE – FIREBASE
 // =============================================================================
 async function saveFirebase() {
@@ -3517,13 +4137,10 @@ async function saveFirebase() {
   if (!db || !window.__firebaseReady) return false;
   try {
     const { doc, setDoc } = window.__firestoreAPI;
-    const key = `plan-${currentYear}-${String(currentMonth+1).padStart(2,'0')}`;
-    await setDoc(doc(db, 'dienstplan', key), getState());
+    const key = `plan-${currentYear}-${String(currentMonth+1).padStart(2,'00')}`;
+    await setDoc(doc(db, 'dienstplan', key), { employees, shifts, shiftTypes, settings, wishes, darkMode, currentYear, currentMonth, currentZoom });
     return true;
-  } catch(e) {
-    console.error('Firebase save error', e);
-    return false;
-  }
+  } catch(e) { console.error('Firebase save error', e); return false; }
 }
 
 async function loadFirebase() {
@@ -3531,14 +4148,15 @@ async function loadFirebase() {
   if (!db || !window.__firebaseReady) return false;
   try {
     const { doc, getDoc } = window.__firestoreAPI;
-    const key = `plan-${currentYear}-${String(currentMonth+1).padStart(2,'0')}`;
+    const key = `plan-${currentYear}-${String(currentMonth+1).padStart(2,'00')}`;
     const snap = await getDoc(doc(db, 'dienstplan', key));
     if (snap.exists()) {
       const d = snap.data();
-      if (d.employees) employees = d.employees;
-      if (d.shifts)    shifts    = d.shifts;
+      if (d.employees)  employees  = d.employees;
+      if (d.shifts)     shifts     = d.shifts;
       if (d.shiftTypes) shiftTypes = d.shiftTypes;
-      if (d.settings)  settings  = { ...settings, ...d.settings };
+      if (d.settings)   settings   = { ...settings, ...d.settings };
+      if (d.wishes)     wishes     = d.wishes;
       return true;
     }
   } catch(e) { console.error('Firebase load error', e); }
@@ -3548,43 +4166,67 @@ async function loadFirebase() {
 function updateSyncBadge(online) {
   const badge = document.getElementById('sync-badge');
   const text  = document.getElementById('sync-text');
-  if (online) {
-    badge.className = 'sync-badge online';
-    text.textContent = 'Cloud-Sync';
-  } else {
-    badge.className = 'sync-badge offline';
-    text.textContent = 'Lokal';
-  }
+  if (online) { badge.className = 'sync-badge online'; text.textContent = 'Cloud-Sync'; }
+  else        { badge.className = 'sync-badge offline'; text.textContent = 'Lokal'; }
 }
 
 async function saveAll() {
-  saveLocal();
+  saveLocal(); // saves all depts + clears unsaved indicator
   const saved = await saveFirebase();
   updateSyncBadge(saved);
-  showToast(saved ? '☁️ In Cloud gespeichert!' : '💾 Lokal gespeichert');
+  const msg = saved ? '☁️ In Cloud gespeichert!' : '💾 Lokal gespeichert ✓';
+  showToast(msg);
+  // Update status in modal-io if it's open
+  const statusEl = document.getElementById('io-save-status');
+  if (statusEl) {
+    statusEl.textContent = '✓ Gespeichert ' + new Date().toLocaleTimeString('de-DE', {hour:'2-digit',minute:'2-digit'});
+    statusEl.style.color = '#34d399';
+  }
 }
 
 // =============================================================================
 // INIT
 // =============================================================================
 async function init() {
-  // Load local first (fast)
+  // Load persisted data (sets departments, currentDeptId, and working vars)
   loadLocal();
 
-  // Try Firebase
+  // Ensure at least one department exists
+  if (!departments.length) {
+    departments = [makeDefaultDept('dept_1', 'Station A3', DEPT_COLORS[0])];
+    currentDeptId = 'dept_1';
+    loadDeptState(departments[0]);
+  }
+
+  // Update header subtitle
+  document.querySelector('.logo-sub').textContent = currentDept().name;
+
+  // Ensure footerShifts initialized
+  shiftTypes.forEach(st => {
+    if (settings.footerShifts[st.id] === undefined) settings.footerShifts[st.id] = true;
+  });
+
+  renderDeptTabs();
+  render();
+  setZoom(currentZoom);
+
+  // Hook openModal to render dept-list when needed
+  const _origOpen = window.openModal;
+  window.openModal = function(id) {
+    _origOpen(id);
+    if (id === 'modal-depts') renderDeptList();
+    if (id === 'modal-io') {
+      const r = document.getElementById('io-import-result');
+      if (r) { r.style.display = 'none'; r.textContent = ''; }
+    }
+  };
+
+  // Try Firebase (optional cloud sync)
   window.addEventListener('firebaseReady', async () => {
     const fb = await loadFirebase();
     updateSyncBadge(fb);
     if (fb) render();
   });
-
-  // Initialize settings.footerShifts for all shift types
-  shiftTypes.forEach(st => {
-    if (settings.footerShifts[st.id] === undefined) settings.footerShifts[st.id] = true;
-  });
-
-  render();
-  setZoom(currentZoom);
 
   // Hide loader
   setTimeout(() => {

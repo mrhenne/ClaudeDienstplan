@@ -200,9 +200,10 @@ body::before {
 }
 body::after { display: none; }
 [data-theme="dark"] #header {
-  background: rgba(22,24,28,0.85);
-  border-bottom-color: rgba(255,255,255,0.07);
+  background: rgba(20,22,28,0.95);
+  border-bottom-color: rgba(255,255,255,0.08);
 }
+[data-theme="dark"] .header-sep { background: rgba(255,255,255,0.10); }
 [data-theme="dark"] body::before {
   background:
     radial-gradient(ellipse 80% 60% at 15% 10%, rgba(91,191,181,0.07) 0%, transparent 60%),
@@ -223,34 +224,35 @@ body::after { display: none; }
    HEADER – HELIOS CORPORATE
    ========================================== */
 #header {
-  background: rgba(255,255,255,0.82);
-  backdrop-filter: blur(20px) saturate(1.8);
-  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
   color: var(--text);
-  padding: 0 18px;
-  height: 60px;
-  min-height: 60px;
+  padding: 0 16px;
+  height: 56px;
+  min-height: 56px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-shrink: 0;
   z-index: 100;
-  border-bottom: 1px solid rgba(255,255,255,0.55);
-  box-shadow: 0 1px 0 rgba(0,0,0,0.05), 0 4px 24px rgba(0,0,0,0.06);
+  border-bottom: 1px solid #e2e6ec;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.04), 0 2px 12px rgba(0,0,0,0.05);
   position: relative;
-  overflow-x: auto;
-  overflow-y: visible;
-  scrollbar-width: none;
-}
-#header::after {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent 5%, rgba(255,255,255,0.9) 30%, rgba(255,255,255,0.9) 70%, transparent 95%);
-  pointer-events: none;
+  /* no overflow – items wrap into logical groups */
 }
 #header::-webkit-scrollbar { display: none; }
+
+/* Group separator in header */
+.header-sep {
+  width: 1px;
+  height: 22px;
+  background: #dde1e8;
+  flex-shrink: 0;
+  margin: 0 2px;
+}
+/* Spacer pushes right-side items to the right */
+.header-spacer { flex: 1; min-width: 8px; }
 
 /* =============================================
    RESPONSIVE LAYOUT MODES
@@ -262,17 +264,16 @@ body::after { display: none; }
 
 /* Elements hidden in compact mode */
 body[data-layout="compact"] .h-hide-compact { display: none !important; }
+body[data-layout="compact"] #header { gap: 5px; padding: 0 10px; }
 body[data-layout="compact"] #header { gap: 8px; padding: 0 12px; }
 body[data-layout="compact"] .zoom-slider { width: 50px; }
 body[data-layout="compact"] .export-btn span,
-body[data-layout="compact"] .save-btn span:not(.unsaved-dot),
 body[data-layout="compact"] .csv-btn span { display: none; }
 
 /* Elements hidden in tablet mode */
 body[data-layout="tablet"] .h-hide-tablet { display: none !important; }
 body[data-layout="tablet"] #header { gap: 7px; padding: 0 10px; }
 body[data-layout="tablet"] .export-btn span,
-body[data-layout="tablet"] .save-btn span:not(.unsaved-dot),
 body[data-layout="tablet"] .csv-btn span { display: none; }
 body[data-layout="tablet"] .export-btn,
 body[data-layout="tablet"] .csv-btn,
@@ -283,7 +284,6 @@ body[data-layout="tablet"] .month-label { min-width: 90px; font-size: 11px; lett
 body[data-layout="mobile"] .h-hide-mobile { display: none !important; }
 body[data-layout="mobile"] #header { gap: 6px; padding: 0 8px; }
 body[data-layout="mobile"] .export-btn span,
-body[data-layout="mobile"] .save-btn span:not(.unsaved-dot),
 body[data-layout="mobile"] .csv-btn span { display: none; }
 body[data-layout="mobile"] .export-btn,
 body[data-layout="mobile"] .save-btn { padding: 6px 8px; min-width: 32px; justify-content: center; }
@@ -361,10 +361,10 @@ body:not([data-layout-manual]) {
   flex-shrink: 0;
 }
 .logo-text { line-height: 1.2; }
-.logo-title { font-weight: 700; font-size: 13px; letter-spacing: 0.8px; color: var(--text); text-transform: uppercase; }
-.logo-sub { font-size: 10px; color: var(--helios-red); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+.logo-title { font-weight: 700; font-size: 12px; letter-spacing: 0.6px; color: var(--text); text-transform: uppercase; }
+.logo-sub { font-size: 9.5px; color: var(--helios-red); font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; }
 
-.header-divider { width: 1px; height: 28px; background: var(--header-border); flex-shrink: 0; }
+.header-sep-old { width: 1px; height: 28px; background: var(--header-border); flex-shrink: 0; }
 
 .view-toggle {
   display: flex;
@@ -1753,7 +1753,7 @@ tr:hover .row-clear-btn { opacity: 1; }
 }
 
 /* ── AI MODAL ── */
-#modal-ai .modal { min-width: 520px; max-width: 680px; padding: 0; overflow: hidden; }
+#modal-ai .modal { min-width: min(520px, 96vw); max-width: 680px; padding: 0; overflow-y: auto; display: flex; flex-direction: column; }
 .ai-modal-header {
   padding: 22px 24px 16px;
   background: linear-gradient(135deg, rgba(91,191,181,0.08), rgba(91,191,181,0.04));
@@ -1781,7 +1781,7 @@ tr:hover .row-clear-btn { opacity: 1; }
   color: var(--text3);
   margin-left: 34px;
 }
-.ai-modal-body { padding: 20px 24px; }
+.ai-modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
 .ai-section-title {
   font-size: 10.5px;
   font-weight: 700;
@@ -2700,11 +2700,11 @@ td.we-off-b { background: rgba(5,150,105,0.04) !important; }
      HEADER
      ============================================================ -->
 <div id="header">
-  <!-- PRIORITY 1: Always visible -->
+
+  <!-- ① LOGO -->
   <div class="logo">
     <div class="logo-icon">
-      <!-- Helios H-Icon (zwei Hände = H) in Rot -->
-      <svg width="34" height="28" viewBox="0 0 34 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg width="30" height="24" viewBox="0 0 34 28" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect width="34" height="28" rx="5" fill="#E30613"/>
         <text x="50%" y="20" text-anchor="middle" font-family="Inter,sans-serif" font-weight="700" font-size="18" fill="white">H</text>
       </svg>
@@ -2715,90 +2715,80 @@ td.we-off-b { background: rgba(5,150,105,0.04) !important; }
     </div>
   </div>
 
-  <div class="header-divider h-hide-mobile"></div>
+  <div class="header-sep h-hide-tablet"></div>
 
-  <div class="view-toggle">
-    <button class="view-btn active" id="btn-month" onclick="setView('month')">MONAT</button>
-    <button class="view-btn" id="btn-week" onclick="setView('week')">WOCHE</button>
-    <button class="view-btn h-hide-tablet" id="btn-year" onclick="openYearView()" title="Jahresübersicht">JAHR</button>
+  <!-- ② VIEW TOGGLE -->
+  <div class="view-toggle h-hide-tablet">
+    <button class="view-btn active" id="btn-month" onclick="setView('month')">Monat</button>
+    <button class="view-btn" id="btn-week" onclick="setView('week')">Woche</button>
+    <button class="view-btn" id="btn-year" onclick="openYearView()">Jahr</button>
   </div>
 
+  <div class="header-sep"></div>
+
+  <!-- ③ MONTH / WEEK NAV -->
   <div class="month-nav">
     <button onclick="changeMonth(-1)" title="Vorheriger Monat">&#8249;</button>
-    <div class="month-label" id="month-label" onclick="openYearView()" title="Jahresübersicht öffnen">APRIL 2026</div>
+    <div class="month-label" id="month-label" onclick="openYearView()" title="Jahresübersicht">APRIL 2026</div>
     <button onclick="changeMonth(1)" title="Nächster Monat">&#8250;</button>
   </div>
-
   <div id="week-controls">
     <button class="week-nav-btn" onclick="changeWeek(-1)">&#8249;</button>
     <span class="week-label" id="week-label">KW 14</span>
     <button class="week-nav-btn" onclick="changeWeek(1)">&#8250;</button>
   </div>
 
-  <div class="header-divider h-hide-tablet"></div>
+  <div class="header-sep h-hide-compact"></div>
 
-  <!-- PRIORITY 2: Hidden on tablet/mobile -->
-  <div class="zoom-control h-hide-tablet">
+  <!-- ④ ZOOM + UNDO (desktop only) -->
+  <div class="zoom-control h-hide-compact">
     <button onclick="adjustZoom(-0.1)" title="Verkleinern">−</button>
     <input type="range" class="zoom-slider" id="zoom-slider" min="0.5" max="1.5" step="0.05" value="1" oninput="setZoom(+this.value)">
     <button onclick="adjustZoom(0.1)" title="Vergrößern">+</button>
     <span class="zoom-label" id="zoom-label">100%</span>
   </div>
-
-  <!-- Undo / Redo -->
-  <div class="undo-redo-group h-hide-tablet">
+  <div class="undo-redo-group h-hide-compact">
     <button class="undo-btn" id="undo-btn" onclick="undoAction()" title="Rückgängig (Ctrl+Z)" disabled>↩</button>
     <button class="undo-btn" id="redo-btn" onclick="redoAction()" title="Wiederholen (Ctrl+Y)" disabled>↪</button>
   </div>
 
-  <!-- PRIORITY 3: Hidden on compact/tablet/mobile -->
-  <div class="workdays-badge h-hide-compact" id="workdays-badge">20 Arbeitstage</div>
-
+  <!-- ⑤ SPACER -->
   <div class="header-spacer"></div>
 
-  <!-- Sync badge – hide on mobile -->
-  <div class="sync-badge offline h-hide-mobile" id="sync-badge">
+  <!-- ⑥ STATUS -->
+  <div class="workdays-badge h-hide-compact" id="workdays-badge">20 Arbeitstage</div>
+  <div class="sync-badge offline h-hide-tablet" id="sync-badge">
     <div class="sync-dot"></div>
     <span id="sync-text">Lokal</span>
   </div>
 
-  <!-- Core action buttons -->
-  <button class="header-btn" id="lock-btn" onclick="toggleLock()"
-    data-tip="🔒 Bearbeitung sperren&#10;Verhindert versehentliche&#10;Änderungen im Plan">🔓</button>
-  <button class="header-btn h-hide-mobile" id="pan-btn" onclick="togglePanMode()"
-    data-tip="✋ Scrollmodus (P)&#10;Klicken &amp; ziehen um den&#10;Plan zu verschieben">✋</button>
-  <button class="header-btn" id="wish-mode-btn" onclick="toggleWishMode()"
-    data-tip="🗓 Verfügbarkeits-Modus (W)&#10;Linksklick: Dienst-Wunsch auswählen ✓&#10;Rechtsklick: Sperrtag setzen ✗&#10;&#10;Perfekt für Mitarbeiter die&#10;nur bestimmte Tage & Dienste können">🗓</button>
-  <button class="header-btn h-hide-tablet" id="filter-btn" onclick="toggleFilterBar()"
-    data-tip="🔍 Mitarbeiter filtern (F)&#10;Nach Name oder Rolle suchen">🔍</button>
-  <button class="header-btn h-hide-compact" id="copy-month-btn" onclick="openCopyMonthModal()"
-    data-tip="📋 Monat kopieren&#10;Vorlage aus Vormonat&#10;übernehmen">📋</button>
-  <button class="header-btn" onclick="openModal('modal-employees')"
-    data-tip="👥 Mitarbeiter verwalten&#10;Hinzufügen, bearbeiten,&#10;Arbeitszeit & Rolle ändern">👥</button>
-  <button class="header-btn h-hide-mobile" onclick="openModal('modal-shifts')"
-    data-tip="⚙️ Dienste konfigurieren&#10;Diensttypen anlegen,&#10;Farben &amp; Stunden">⚙️</button>
-  <button class="header-btn" onclick="openModal('modal-settings')"
-    data-tip="☰ Einstellungen&#10;Spalten, Stundenfaktor,&#10;Fußzeile konfigurieren">☰</button>
-  <button class="header-btn h-hide-tablet" onclick="openStatsModal()"
-    data-tip="📊 Monatsstatistik&#10;Ist/Soll-Stunden, Urlaub,&#10;Kranktage – Übersicht">📊</button>
-  <button class="header-btn h-hide-compact" id="theme-btn" onclick="toggleTheme()"
-    data-tip="🌙 Dark / Light Mode&#10;Hellen oder dunklen&#10;Modus umschalten">🌙</button>
+  <div class="header-sep"></div>
 
-  <!-- Layout toggle (device mode) -->
-  <button class="layout-toggle-btn" id="layout-toggle-btn" onclick="cycleLayout()"
-    data-layout="desktop" title="Ansicht wechseln: Desktop / Kompakt / Tablet / Mobil"></button>
+  <!-- ⑦ TOOL BUTTONS -->
+  <button class="header-btn" id="lock-btn" onclick="toggleLock()" data-tip="🔒 Bearbeitung sperren">🔓</button>
+  <button class="header-btn h-hide-tablet" id="pan-btn" onclick="togglePanMode()" data-tip="✋ Scrollmodus (P)">✋</button>
+  <button class="header-btn" id="wish-mode-btn" onclick="toggleWishMode()" data-tip="🗓 Verfügbarkeits-Modus (W)">🗓</button>
+  <button class="header-btn h-hide-compact" id="filter-btn" onclick="toggleFilterBar()" data-tip="🔍 Mitarbeiter filtern (F)">🔍</button>
+  <button class="header-btn h-hide-compact" id="copy-month-btn" onclick="openCopyMonthModal()" data-tip="📋 Monat kopieren">📋</button>
+  <button class="header-btn" onclick="openModal('modal-employees')" data-tip="👥 Mitarbeiter verwalten">👥</button>
+  <button class="header-btn h-hide-tablet" onclick="openModal('modal-shifts')" data-tip="⚙️ Dienste konfigurieren">⚙️</button>
+  <button class="header-btn h-hide-tablet" onclick="openStatsModal()" data-tip="📊 Monatsstatistik">📊</button>
+  <button class="header-btn" onclick="openModal('modal-settings')" data-tip="☰ Einstellungen">☰</button>
+  <button class="header-btn h-hide-compact" id="theme-btn" onclick="toggleTheme()" data-tip="🌙 Dark / Light Mode">🌙</button>
 
-  <!-- Mobile overflow toggle -->
-  <button class="header-btn h-show-mobile" id="overflow-drawer-btn" onclick="toggleOverflowDrawer()"
-    title="Weitere Aktionen" style="display:none">⋯</button>
+  <div class="header-sep h-hide-compact"></div>
 
-  <button class="export-btn h-hide-mobile" onclick="printPDF()">📄 PDF</button>
-  <button class="csv-btn h-hide-tablet" onclick="exportCSV()" title="Monatsplan als CSV exportieren">⬇ CSV</button>
-  <button class="export-btn h-hide-tablet" onclick="openModal('modal-io')" title="Archiv / Import / Export">📦 Archiv</button>
-  <button class="ai-plan-btn" onclick="openModal('modal-ai')" title="KI-Dienstplanung: Plan automatisch erstellen lassen">
-    <span class="ai-sparkle">✦</span> <span class="h-hide-mobile">KI-Plan</span>
+  <!-- ⑧ EXPORT / AI / SAVE -->
+  <button class="export-btn h-hide-compact" onclick="printPDF()">📄 PDF</button>
+  <button class="export-btn h-hide-compact" onclick="openModal('modal-io')">📦 Archiv</button>
+  <button class="ai-plan-btn" onclick="openModal('modal-ai')" title="KI-Dienstplanung">
+    <span class="ai-sparkle">✦</span> KI-Plan
   </button>
-  <button class="save-btn" onclick="saveAll()">💾 <span class="h-hide-mobile">Sichern</span><span class="unsaved-dot"></span></button>
+  <button class="save-btn" onclick="saveAll()">💾 Sichern<span class="unsaved-dot"></span></button>
+
+  <!-- Layout toggle + Mobile overflow -->
+  <button class="layout-toggle-btn" id="layout-toggle-btn" onclick="cycleLayout()" data-layout="desktop" title="Ansicht wechseln"></button>
+  <button class="header-btn" id="overflow-drawer-btn" onclick="toggleOverflowDrawer()" title="Mehr" style="display:none">⋯</button>
 </div>
 
 <!-- AI PLANNER MODAL -->
@@ -2841,7 +2831,7 @@ td.we-off-b { background: rgba(5,150,105,0.04) !important; }
       <div class="ai-rule-row">
         <span class="ai-rule-label">🌅 Frühschicht-Mindestbesetzung</span>
         <div class="ai-rule-value">
-          <input type="number" id="ai-min-fd" value="3" min="1" max="10"> Personen
+          <input type="number" id="ai-min-fd" value="2" min="1" max="10"> Personen
         </div>
       </div>
       <div class="ai-rule-row">
@@ -2853,13 +2843,13 @@ td.we-off-b { background: rgba(5,150,105,0.04) !important; }
       <div class="ai-rule-row">
         <span class="ai-rule-label">🌙 Nachtdienst-Mindestbesetzung</span>
         <div class="ai-rule-value">
-          <input type="number" id="ai-min-nd" value="1" min="0" max="10"> Personen
+          <input type="number" id="ai-min-nd" value="2" min="0" max="10"> Personen
         </div>
       </div>
       <div class="ai-rule-row">
         <span class="ai-rule-label">📅 Max. Arbeitstage am Stück</span>
         <div class="ai-rule-value">
-          <input type="number" id="ai-max-streak" value="5" min="3" max="7"> Tage
+          <input type="number" id="ai-max-streak" value="9" min="3" max="14"> Tage
         </div>
       </div>
       <div class="ai-rule-row">

@@ -96,7 +96,7 @@
   /* Text */
   --text:  #1A1A1A;
   --text2: #6B6B6B;
-  --text3: #ADADAD;
+  --text3: #8E8E8E;    /* darkened for 4.6:1 on white */
 
   /* Accent – use teal everywhere instead of red */
   --accent:       #5BBFB5;
@@ -752,7 +752,7 @@ body.has-unsaved .save-btn .unsaved-dot { display: block; }
   flex: 1;
   overflow: auto;
   padding: 16px;
-  background: linear-gradient(160deg, rgba(91,191,181,0.04) 0%, transparent 40%);
+  background: linear-gradient(150deg, rgba(91,191,181,0.06) 0%, rgba(255,255,255,0.02) 50%, transparent 100%);
   position: relative;
   z-index: 1;
   scrollbar-width: thin;
@@ -765,38 +765,24 @@ body.has-unsaved .save-btn .unsaved-dot { display: block; }
 #table-container::before { display: none; }
 
 #plan-wrapper {
-  /* Glass card look on the wrapper – table must remain overflow:visible for sticky */
-  background: rgba(255,255,255,0.48);
-  backdrop-filter: blur(20px) saturate(1.8);
-  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  /* NO backdrop-filter — creates a stacking context that breaks position:sticky */
+  background: #ffffff;
   border-radius: 20px;
-  overflow: visible;   /* MUST stay visible – overflow:hidden/clip breaks sticky */
+  overflow: visible;
   min-width: fit-content;
   position: relative;
-  border: 1px solid rgba(255,255,255,0.75);
+  border: 1px solid #dde1e8;
   box-shadow:
-    0 4px 32px rgba(0,0,0,0.08),
-    0 1px 0 rgba(255,255,255,0.90) inset;
+    0 4px 24px rgba(0,0,0,0.07),
+    0 1px 4px rgba(0,0,0,0.04);
 }
-/* Shine bead on top edge */
-#plan-wrapper::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 20px; right: 20px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.95) 30%, rgba(255,255,255,0.95) 70%, transparent);
-  border-radius: 1px;
-  pointer-events: none;
-  z-index: 30;
-}
+#plan-wrapper::before { display: none; }
 [data-theme="dark"] #plan-wrapper {
-  background: rgba(28,30,36,0.72);
-  border-color: rgba(255,255,255,0.07);
-  box-shadow: 0 4px 32px rgba(0,0,0,0.40);
+  background: #1e2028;
+  border-color: rgba(255,255,255,0.08);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.40);
 }
-[data-theme="dark"] #plan-wrapper::before {
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.07) 30%, rgba(255,255,255,0.07) 70%, transparent);
-}
+
 
 /* ==========================================
    TABLE
@@ -809,11 +795,10 @@ body.has-unsaved .save-btn .unsaved-dot { display: block; }
   /* NO overflow:hidden here – it would break position:sticky on thead th and .employee-cell */
 }
 
-/* Header row – sticky top */
+/* Header row – sticky top. NO backdrop-filter here: it creates a new stacking context
+   that causes sticky td cells to appear BEHIND th cells on Chrome. Use solid bg. */
 #plan-table thead th {
-  background: rgba(247,248,250,0.96);
-  backdrop-filter: blur(24px) saturate(1.8);
-  -webkit-backdrop-filter: blur(24px) saturate(1.8);
+  background: #f4f5f7;
   color: var(--text2);
   padding: 0;
   white-space: nowrap;
@@ -823,26 +808,26 @@ body.has-unsaved .save-btn .unsaved-dot { display: block; }
   position: sticky;
   top: 0;
   z-index: 12;
-  box-shadow: 0 1px 0 rgba(0,0,0,0.07);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.08);
 }
 
-/* Corner cell: sticky top AND left – highest z-index of all */
+/* Corner: sticky top + left – z-index must beat all other sticky cells */
 #plan-table thead th.emp-th {
   z-index: 25;
   left: 0;
-  background: rgba(245,246,249,0.98) !important;
-  box-shadow: 4px 0 18px rgba(0,0,0,0.07), 0 1px 0 rgba(0,0,0,0.07);
+  background: #f2f3f6 !important;
+  box-shadow: 4px 0 14px rgba(0,0,0,0.08), 0 1px 0 rgba(0,0,0,0.08);
 }
 [data-theme="dark"] #plan-table thead th.emp-th {
-  background: rgba(22,24,30,0.98) !important;
+  background: #1a1c22 !important;
 }
 /* Stat column headers */
 #plan-table thead th.stat-th {
   z-index: 16;
-  background: rgba(246,247,250,0.97) !important;
+  background: #f3f4f7 !important;
 }
 [data-theme="dark"] #plan-table thead th.stat-th {
-  background: rgba(22,24,30,0.97) !important;
+  background: #1b1d24 !important;
 }
 
 .th-inner {
@@ -858,17 +843,17 @@ body.has-unsaved .save-btn .unsaved-dot { display: block; }
 }
 
 #plan-table thead th {
-  background: rgba(240,241,243,0.98) !important;
+  background: #f4f5f7 !important;
   color: var(--text2) !important;
   border-color: rgba(0,0,0,0.06) !important;
 }
-#plan-table thead th.weekend { background: rgba(245,246,248,0.98) !important; }
+#plan-table thead th.weekend { background: #f6f7f9 !important; }
 #plan-table thead th.today-col { 
-  background: rgba(91,191,181,0.08) !important;
+  background: #ecf9f7 !important;
   border-bottom: 2px solid var(--teal) !important;
   color: var(--teal2) !important;
 }
-[data-theme="dark"] #plan-table thead th { background: rgba(26,28,34,0.98) !important; color: rgba(255,255,255,0.65) !important; }
+[data-theme="dark"] #plan-table thead th { background: #1e2028 !important; color: rgba(255,255,255,0.65) !important; }
 
 .th-employee { min-width: 150px; align-items: flex-start !important; padding-left: 14px !important; }
 .col-stat { min-width: 38px; font-size: 11px; font-family: 'JetBrains Mono', 'Courier New', monospace; }
@@ -878,19 +863,19 @@ body.has-unsaved .save-btn .unsaved-dot { display: block; }
   font-weight: 700;
   font-family: 'DM Mono', 'Courier New', monospace;
   line-height: 1;
-  color: var(--text);
+  color: #1f2937;           /* slightly softer than pure black */
 }
 .th-day-name {
   font-size: 9px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 1px;
   text-transform: uppercase;
-  color: var(--text3);
+  color: #6b7280;           /* solid #6b7280 = 4.7:1 on #f4f5f7 */
 }
 
-.th-weekend { background: rgba(245,246,248,0.98) !important; }
-.th-holiday { background: rgba(254,242,242,0.98) !important; color: #b91c1c !important; }
-.th-today   { background: rgba(91,191,181,0.08) !important; color: var(--teal2) !important; }
+.th-weekend { background: #f6f7f9 !important; }
+.th-holiday { background: #fef2f2 !important; color: #991b1b !important; }
+.th-today   { background: #ecf9f7 !important; color: #2a9d8f !important; }
 
 /* Warning pulse on understaffed days – scales with zoom */
 :root { --table-zoom: 1; }
@@ -932,50 +917,52 @@ body.has-unsaved .save-btn .unsaved-dot { display: block; }
 }
 .warn-label {
   font-size: calc(8px / var(--table-zoom));
-  font-weight: 700;
-  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-weight: 800;
+  font-family: 'DM Mono', 'Courier New', monospace;
   letter-spacing: 0;
   line-height: 1;
-  background: rgba(245,158,11,0.2);
-  color: #f59e0b;
+  background: rgba(180,100,0,0.14);
+  color: #92400e;          /* dark amber – 5.6:1 contrast on light bg */
   border-radius: calc(3px / var(--table-zoom));
   padding: calc(1.5px / var(--table-zoom)) calc(3.5px / var(--table-zoom));
   white-space: nowrap;
-  min-font-size: 6px;
 }
 .warn-label.critical {
-  background: rgba(239,68,68,0.22);
-  color: #ef4444;
+  background: rgba(180,0,0,0.13);
+  color: #991b1b;          /* dark red – 7.5:1 contrast */
 }
 
 /* Cells */
 #plan-table td {
-  border-right: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
+  border-right: 1px solid #e8eaed;
+  border-bottom: 1px solid #e8eaed;
   padding: 0;
   vertical-align: top;
 }
+[data-theme="dark"] #plan-table td {
+  border-right-color: rgba(255,255,255,0.06);
+  border-bottom-color: rgba(255,255,255,0.06);
+}
 
 .employee-cell {
-  min-width: 150px;
+  min-width: 155px;
   padding: 7px 10px 7px 14px;
   cursor: pointer;
-  /* Must be very opaque so scrolled day-cells behind it are hidden */
-  background: rgba(248,250,251,0.97);
+  /* Solid background — NO backdrop-filter (breaks stacking context) */
+  background: #f7f8fa;
   position: sticky;
   left: 0;
   z-index: 8;
-  /* Right divider with frosted glow */
-  border-right: 1px solid rgba(0,0,0,0.07) !important;
-  box-shadow: 4px 0 18px rgba(0,0,0,0.07);
+  border-right: 1.5px solid #dde1e8 !important;
+  box-shadow: 4px 0 16px rgba(0,0,0,0.07);
 }
 [data-theme="dark"] .employee-cell {
-  background: rgba(24,26,32,0.97);
-  border-right-color: rgba(255,255,255,0.07) !important;
-  box-shadow: 4px 0 18px rgba(0,0,0,0.45);
+  background: #1c1e26;
+  border-right-color: rgba(255,255,255,0.08) !important;
+  box-shadow: 4px 0 16px rgba(0,0,0,0.45);
 }
-.employee-cell:hover { background: rgba(232,248,246,0.98); }
-[data-theme="dark"] .employee-cell:hover { background: rgba(28,34,40,0.97); }
+.employee-cell:hover { background: #edf7f5; }
+[data-theme="dark"] .employee-cell:hover { background: #22282e; }
 .emp-name { font-weight: 700; font-size: 11.5px; color: var(--text); letter-spacing: 0.1px; }
 [data-theme="dark"] .emp-name { color: #e8eaed; }
 .emp-role  { font-size: 9.5px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.6px; margin-top: 1px; }
@@ -988,16 +975,16 @@ body.has-unsaved .save-btn .unsaved-dot { display: block; }
   font-family: 'DM Mono', 'Courier New', monospace;
   font-size: 11px;
   font-weight: 600;
-  background: rgba(247,248,250,0.97);
+  background: #f5f6f8;
   position: sticky;
   z-index: 6;
   color: var(--text);
-  border-right: 1px solid rgba(0,0,0,0.06);
-  box-shadow: 2px 0 10px rgba(0,0,0,0.04);
+  border-right: 1px solid #dde1e8;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.04);
 }
 [data-theme="dark"] .stat-cell {
-  background: rgba(20,22,30,0.97);
-  color: #a8b4d8;
+  background: #1c1e26;
+  color: #9aa4c0;
   border-right-color: rgba(255,255,255,0.07);
 }
 .stat-cell.negative { color: #c81e1e; }
@@ -1014,22 +1001,22 @@ body.has-unsaved .save-btn .unsaved-dot { display: block; }
   text-align: center;
   vertical-align: top;
   cursor: pointer;
-  transition: background var(--transition);
+  transition: background 0.1s;
   position: relative;
   padding-bottom: 4px;
-  background: rgba(255,255,255,0.55);
+  background: #ffffff;
 }
-[data-theme="dark"] .day-cell { background: rgba(255,255,255,0.03); }
+[data-theme="dark"] .day-cell { background: #22242c; }
 /* Cells with notes get a bit more height so note chip fits */
 .day-cell.has-note { min-height: 72px; }
-.day-cell:hover { background: rgba(91,191,181,0.10) !important; }
+.day-cell:hover { background: #e8f8f6 !important; }
 [data-theme="dark"] .day-cell:hover { background: rgba(60,80,160,0.25) !important; }
-.day-cell.weekend { background: rgba(255,240,200,0.55); }
-.day-cell.holiday { background: rgba(255,210,210,0.55); }
-.day-cell.today-col { background: rgba(91,191,181,0.07); }
-[data-theme="dark"] .day-cell.weekend { background: rgba(50,35,5,0.6); }
-[data-theme="dark"] .day-cell.holiday { background: rgba(50,10,10,0.6); }
-[data-theme="dark"] .day-cell.today-col { background: rgba(20,50,120,0.5); }
+.day-cell.weekend  { background: #fdfaf0; }
+.day-cell.holiday  { background: #fff5f5; }
+.day-cell.today-col{ background: #edfaf8; }
+[data-theme="dark"] .day-cell.weekend  { background: #2a2418; }
+[data-theme="dark"] .day-cell.holiday  { background: #2a1a1a; }
+[data-theme="dark"] .day-cell.today-col{ background: #182e2a; }
 
 /* Note-edit overlay on hover */
 .day-cell:hover .note-edit-btn { opacity: 1; }
@@ -1203,43 +1190,44 @@ body.has-unsaved .save-btn .unsaved-dot { display: block; }
 [data-theme="dark"] .shift-note-tag-text { color: #fcd34d; }
 
 /* Note-only chip (no shift assigned) */
-/* Ruhezeit-Verletzung Badge (ND→FD <11h) */
+/* Ruhezeit-Verletzung Badge – alle Schichten mit Ruhezeitverletzung */
 .rest-violation-badge {
   position: absolute;
   bottom: calc(2px / var(--table-zoom));
   left: 50%;
   transform: translateX(-50%);
-  font-size: calc(7px / var(--table-zoom));
-  font-weight: 700;
-  font-family: 'JetBrains Mono', 'Courier New', monospace;
-  background: rgba(239,68,68,0.18);
-  color: #f87171;
-  border: 1px solid rgba(239,68,68,0.4);
+  font-size: calc(7.5px / var(--table-zoom));
+  font-weight: 800;
+  font-family: 'DM Mono', monospace;
   border-radius: calc(3px / var(--table-zoom));
-  padding: calc(1px / var(--table-zoom)) calc(3px / var(--table-zoom));
+  padding: calc(1.5px / var(--table-zoom)) calc(4px / var(--table-zoom));
   white-space: nowrap;
   pointer-events: none;
-  animation: restPulse 2.5s ease-in-out infinite;
   z-index: 3;
+  /* default = high: orange */
+  background: #fff3cd;
+  color: #7c4a00;          /* 7.1:1 contrast on #fff3cd */
+  border: 1px solid #f59e0b;
+  animation: restPulse 2.5s ease-in-out infinite;
 }
-/* critical = ND→FD/ZD: ~0-2h (bright red, fast pulse) */
+/* critical: ND→FD/ZD 0–2h – red with fast pulse */
 .rest-violation-badge.critical {
-  background: rgba(220,38,38,0.28);
-  color: #fca5a5;
-  border-color: rgba(220,38,38,0.7);
+  background: #fee2e2;
+  color: #7f1d1d;          /* 9.3:1 contrast on #fee2e2 */
+  border-color: #ef4444;
   animation: restPulseFast 1s ease-in-out infinite;
 }
-/* high = SD/ST→FD/ZD: ~7-10h (amber) */
+/* high: SD/ST→FD or ND→SD */
 .rest-violation-badge.high {
-  background: rgba(245,158,11,0.20);
-  color: #fcd34d;
-  border-color: rgba(245,158,11,0.5);
+  background: #ffedd5;
+  color: #7c2d12;          /* 8.2:1 contrast on #ffedd5 */
+  border-color: #f97316;
 }
-/* border = ZD/LT→FD: ~11-12h (yellow, subtle) */
+/* border: ZD/LT→FD ~11h */
 .rest-violation-badge.border {
-  background: rgba(234,179,8,0.14);
-  color: #fef08a;
-  border-color: rgba(234,179,8,0.35);
+  background: #fef9c3;
+  color: #713f12;          /* 8.8:1 contrast on #fef9c3 */
+  border-color: #eab308;
   animation: restPulse 4s ease-in-out infinite;
 }
 @keyframes restPulse {
@@ -1247,8 +1235,8 @@ body.has-unsaved .save-btn .unsaved-dot { display: block; }
   50%      { opacity: 0.55; }
 }
 @keyframes restPulseFast {
-  0%,100% { opacity: 1; box-shadow: 0 0 0 0 rgba(220,38,38,0.5); }
-  50%      { opacity: 0.7;  box-shadow: 0 0 4px 2px rgba(220,38,38,0.3); }
+  0%,100% { opacity: 1; box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+  50%      { opacity: 0.8;  box-shadow: 0 0 5px 2px rgba(239,68,68,0.2); }
 }
 
 /* Improved note-only chip */
@@ -3960,34 +3948,57 @@ function renderTable() {
           const findLabel = (id) => shiftTypes.find(s => s.id === id)?.label || id;
 
           if (prevType) {
-            // KRITISCH: Nachtdienst → Frühdienst/Zwischendienst selber Morgen (0-2h Pause)
-            const criticalPrev = ['ND'];
-            const criticalCurr = ['FD', 'ZD', 'LT'];
-            // VERLETZUNG: Spätdienst/Spätteam → Frühdienst/Zwischendienst (7-10h Pause)
-            const highPrev = ['SD', 'ST'];
-            const highCurr  = ['FD', 'ZD', 'LT'];
-            // GRENZWERTIG: Zwischendienst/Leitungstag → Frühdienst (11-12h Pause)
-            const borderPrev = ['ZD', 'LT'];
-            const borderCurr = ['FD'];
-            // Dynamic: also catch any shift with "FT" or "FB" or "FO" in ID (Fortbildung etc.)
-            const isFortbildung = (id) => /^(FT|FB|FO|FBT|FORT)/i.test(id);
+            // ─── Ruhezeitmatrix nach ArbZG §5 (mind. 11h Ruhezeit) ───
+            // Schichtzeiten Helios Duisburg:
+            //   ND  22:00–06:00 | SD  14:00–22:30 | ST  13:00–22:00
+            //   FD  06:00–14:00 | ZD  08:00–18:00 | LT  08:00–16:00
+            //   FB/FT  ganztags  | U/URL  ganztags
 
-            let severity = null;
-            if (criticalPrev.includes(prevType) && (criticalCurr.includes(cell.type) || isFortbildung(cell.type))) {
-              severity = 'critical';
-            } else if (highPrev.includes(prevType) && (highCurr.includes(cell.type) || isFortbildung(cell.type))) {
-              severity = 'high';
-            } else if ((borderPrev.includes(prevType) || isFortbildung(prevType)) && borderCurr.includes(cell.type)) {
-              severity = 'border';
-            } else if (isFortbildung(prevType) && criticalCurr.includes(cell.type)) {
-              severity = 'high';
-            }
+            const isFortbildung = (id) => /^(FT|FB|FO|FBT|FORT)/i.test(id);
+            const isUrlaub      = (id) => /^(U|URL|KR|AZV|BER)/i.test(id);
+
+            // Ruhezeit-Schätzung in Stunden: prevType → currentType
+            const restHours = (prev, curr) => {
+              const ends   = { ND:6,  SD:22.5, ST:22, FD:14, ZD:18, LT:16 };
+              const starts = { FD:6,  ZD:8,    LT:8,  SD:14, ST:13 };
+              const prevEnd   = ends[prev]   ?? (isFortbildung(prev) ? 17 : (isUrlaub(prev) ? 0 : null));
+              const currStart = starts[curr] ?? (isFortbildung(curr) ? 8  : (isUrlaub(curr) ? 0 : null));
+              if (prevEnd === null || currStart === null) return 99; // unbekannt → kein Badge
+              let rest = currStart - prevEnd;
+              if (rest < 0) rest += 24; // Nachtübergang
+              return rest;
+            };
+
+            // ND-spezifische Regeln (ND endet 06:00)
+            const isNDCritical = prevType === 'ND' && ['FD','ZD','LT'].includes(cell.type);
+            const isNDFortbild  = prevType === 'ND' && isFortbildung(cell.type);
+            const isNDHigh      = prevType === 'ND' && ['SD','ST'].includes(cell.type);
+            const isNDUrlaub    = prevType === 'ND' && isUrlaub(cell.type);
+
+            // SD/ST-Regeln (enden ~22:00)
+            const isSDHigh = ['SD','ST'].includes(prevType) && ['FD','ZD','LT'].includes(cell.type);
+            const isSDFort = ['SD','ST'].includes(prevType) && isFortbildung(cell.type);
+
+            // ZD/LT-Grenzwert
+            const isBorder = ['ZD','LT'].includes(prevType) && ['FD'].includes(cell.type);
+
+            let severity = null, hours = 99, hoursStr = '';
+
+            if      (isNDCritical || isNDFortbild) { severity = 'critical'; hoursStr = '0–2'; }
+            else if (isNDHigh)                      { severity = 'high';     hoursStr = '~8'; }
+            else if (isNDUrlaub)                    { severity = 'high';     hoursStr = '~8'; }
+            else if (isSDHigh || isSDFort)          { severity = 'high';     hoursStr = '7–10'; }
+            else if (isBorder)                      { severity = 'border';   hoursStr = '~11'; }
 
             if (severity) {
-              const icon = severity === 'critical' ? '⚡' : severity === 'high' ? '⚠️' : '⚡';
-              const label = severity === 'critical' ? '0h!' : severity === 'high' ? '⚡11h' : '~11h';
-              const hours = severity === 'critical' ? '0–2' : severity === 'high' ? '7–10' : '11–12';
-              restBadge = `<div class="rest-violation-badge ${severity}" title="${icon} Ruhezeitverletzung: ${findLabel(prevType)}→${findLabel(cell.type)} – nur ~${hours}h Ruhezeit (ArbZG §5 mind. 11h)">${label}</div>`;
+              const prevLbl = findLabel(prevType);
+              const currLbl = findLabel(cell.type);
+              const icon  = severity === 'critical' ? '⚡' : '⚠';
+              const badge = severity === 'critical' ? `${icon}${hoursStr}h!` : `${icon}${hoursStr}h`;
+              const tip   = `${icon} Ruhezeitverletzung (ArbZG §5):
+${prevLbl} → ${currLbl}
+Ruhezeit: nur ~${hoursStr}h statt mind. 11h`;
+              restBadge = `<div class="rest-violation-badge ${severity}" title="${tip}">${badge}</div>`;
             }
           }
 

@@ -179,7 +179,9 @@ body {
   background: var(--bg);
   color: var(--text);
   height: 100%;
-  overflow: hidden;
+  /* overflow:clip = clips visually WITHOUT creating a scroll-container   */
+  /* → position:sticky still works. overflow:hidden BREAKS sticky. */
+  overflow: clip;
   display: flex;
   flex-direction: column;
   transition: background 0.35s, color 0.25s;
@@ -703,7 +705,7 @@ body.has-unsaved .save-btn .unsaved-dot { display: block; }
 #main {
   display: flex;
   flex: 1;
-  overflow: hidden;
+  min-height: 0; /* lets flex children shrink + scroll; never use overflow:hidden here */
 }
 
 /* ==========================================
@@ -761,6 +763,7 @@ body.has-unsaved .save-btn .unsaved-dot { display: block; }
    ========================================== */
 #table-container {
   flex: 1;
+  min-height: 0;
   overflow: auto;
   padding: 16px;
   background: linear-gradient(150deg, rgba(91,191,181,0.06) 0%, rgba(255,255,255,0.02) 50%, transparent 100%);
@@ -1649,7 +1652,7 @@ body.wish-mode-on #wish-mode-btn { background: rgba(22,163,74,0.12) !important; 
 }
 
 /* Row clear button (shown on row hover) */
-.emp-cell { position: relative !important; }
+/* emp-cell: position:sticky set on .employee-cell – sticky acts as containing block */
 .row-clear-btn {
   position: absolute;
   right: 4px;
@@ -2635,6 +2638,76 @@ td.we-off-b { background: rgba(5,150,105,0.04) !important; }
   .day-cell { min-width: 32px !important; width: 32px !important; }
   @page { size: A3 landscape; margin: 8mm; }
 }
+
+/* ── SVG Icon Styles ────────────────────────────────────────────────── */
+.header-btn svg,
+.undo-btn svg,
+.export-btn svg,
+.save-btn svg,
+.ai-plan-btn svg,
+.icon-btn svg,
+.btn svg,
+.row-clear-btn svg,
+[class*="-btn"] svg {
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+.header-btn,
+.undo-btn,
+.export-btn,
+.save-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+/* ── Header-btn: refined glass style ─────────────────────────────────── */
+.header-btn {
+  background: rgba(255,255,255,0.70);
+  border: 1px solid rgba(0,0,0,0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+}
+.header-btn:hover {
+  background: rgba(255,255,255,0.92);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.10);
+  transform: translateY(-1px);
+}
+.header-btn:active { transform: translateY(0); }
+[data-theme="dark"] .header-btn {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.10);
+}
+[data-theme="dark"] .header-btn:hover {
+  background: rgba(255,255,255,0.12);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.35);
+}
+
+/* ── Icon-btn in modals ───────────────────────────────────────────────── */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px; height: 28px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--glass2);
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.icon-btn:hover {
+  background: var(--surface2);
+  color: var(--text);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.icon-btn.danger { color: #ef4444; border-color: rgba(239,68,68,0.25); background: rgba(239,68,68,0.06); }
+.icon-btn.danger:hover { background: rgba(239,68,68,0.14); }
 </style>
 </head>
 
@@ -2758,8 +2831,8 @@ td.we-off-b { background: rgba(5,150,105,0.04) !important; }
     </div>
 
     <div class="undo-redo-group h-hide-compact">
-      <button class="undo-btn" id="undo-btn" onclick="undoAction()" title="Rückgängig (Ctrl+Z)" disabled>↩</button>
-      <button class="undo-btn" id="redo-btn" onclick="redoAction()" title="Wiederholen (Ctrl+Y)" disabled>↪</button>
+      <button class="undo-btn" id="undo-btn" onclick="undoAction()" title="Rückgängig (Ctrl+Z)" disabled><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M3 13A9 9 0 1 0 5.17 5.17L3 7"/></svg></button>
+      <button class="undo-btn" id="redo-btn" onclick="redoAction()" title="Wiederholen (Ctrl+Y)" disabled><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"/><path d="M21 13A9 9 0 1 1 18.83 5.17L21 7"/></svg></button>
     </div>
   </div>
 
@@ -2777,27 +2850,27 @@ td.we-off-b { background: rgba(5,150,105,0.04) !important; }
 
     <div class="header-sep"></div>
 
-    <button class="header-btn" id="lock-btn" onclick="toggleLock()" data-tip="🔒 Bearbeitung sperren&#10;Verhindert versehentliche Änderungen">🔓</button>
-    <button class="header-btn h-hide-compact" id="pan-btn" onclick="togglePanMode()" data-tip="✋ Scrollmodus (P)">✋</button>
-    <button class="header-btn" id="wish-mode-btn" onclick="toggleWishMode()" data-tip="🗓 Verfügbarkeits-Modus (W)">🗓</button>
-    <button class="header-btn h-hide-compact" id="copy-month-btn" onclick="openCopyMonthModal()" data-tip="📋 Monat kopieren">📋</button>
-    <button class="header-btn" onclick="openModal('modal-employees')" data-tip="👥 Mitarbeiter verwalten">👥</button>
-    <button class="header-btn h-hide-compact" onclick="openModal('modal-shifts')" data-tip="⚙️ Dienste konfigurieren">⚙️</button>
-    <button class="header-btn h-hide-compact" onclick="openStatsModal()" data-tip="📊 Monatsstatistik">📊</button>
-    <button class="header-btn" onclick="openModal('modal-settings')" data-tip="☰ Einstellungen">☰</button>
-    <button class="header-btn h-hide-compact" id="theme-btn" onclick="toggleTheme()" data-tip="🌙 Dark / Light Mode">🌙</button>
+    <button class="header-btn" id="lock-btn" onclick="toggleLock()" data-tip="Bearbeitung sperren"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2.5"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg></button>
+    <button class="header-btn h-hide-compact" id="pan-btn" onclick="togglePanMode()" data-tip="Scrollmodus (P)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/></svg></button>
+    <button class="header-btn" id="wish-mode-btn" onclick="toggleWishMode()" data-tip="Verfügbarkeits-Modus (W)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><circle cx="9" cy="16" r="1.2" fill="currentColor"/><circle cx="15" cy="16" r="1.2" fill="currentColor"/></svg></button>
+    <button class="header-btn h-hide-compact" id="copy-month-btn" onclick="openCopyMonthModal()" data-tip="Monat kopieren"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+    <button class="header-btn" onclick="openModal('modal-employees')" data-tip="Mitarbeiter verwalten"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></button>
+    <button class="header-btn h-hide-compact" onclick="openModal('modal-shifts')" data-tip="Dienste konfigurieren"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M7 9h4M13 9h4M7 12h3M13 12h3"/></svg></button>
+    <button class="header-btn h-hide-compact" onclick="openStatsModal()" data-tip="Monatsstatistik"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></button>
+    <button class="header-btn" onclick="openModal('modal-settings')" data-tip="Einstellungen"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+    <button class="header-btn h-hide-compact" id="theme-btn" onclick="toggleTheme()" data-tip="Dark / Light Mode" id="theme-btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
 
     <div class="header-sep"></div>
 
-    <button class="export-btn h-hide-compact" onclick="printPDF()">📄 PDF</button>
-    <button class="export-btn h-hide-compact" onclick="openModal('modal-io')">📦 Archiv</button>
+    <button class="export-btn h-hide-compact" onclick="printPDF()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg> PDF</button>
+    <button class="export-btn h-hide-compact" onclick="openModal('modal-io')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg> Archiv</button>
     <button class="ai-plan-btn" onclick="openModal('modal-ai')" title="KI-Dienstplanung">
-      <span class="ai-sparkle">✦</span> KI-Plan
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> KI-Plan
     </button>
-    <button class="save-btn" onclick="saveAll()">💾 Sichern<span class="unsaved-dot"></span></button>
+    <button class="save-btn" onclick="saveAll()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Sichern<span class="unsaved-dot"></span></button>
 
     <button class="layout-toggle-btn" id="layout-toggle-btn" onclick="cycleLayout()" data-layout="desktop" title="Ansicht wechseln"></button>
-    <button class="header-btn" id="overflow-drawer-btn" onclick="toggleOverflowDrawer()" title="Mehr" style="display:none">⋯</button>
+    <button class="header-btn" id="overflow-drawer-btn" onclick="toggleOverflowDrawer()" title="Mehr" style="display:none"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="19" cy="12" r="1.5" fill="currentColor"/></svg></button>
   </div>
 </div>
 
@@ -2807,17 +2880,17 @@ td.we-off-b { background: rgba(5,150,105,0.04) !important; }
     oninput="setZoom(+this.value); document.getElementById('zoom-slider').value=this.value">
   <button class="header-btn" onclick="adjustZoom(0.1)" title="Vergrößern">+</button>
   <span class="zoom-label" id="zoom-label-drawer" style="margin-right:8px">100%</span>
-  <button class="header-btn" id="undo-btn-d" onclick="undoAction()" title="Rückgängig" disabled>↩</button>
-  <button class="header-btn" id="redo-btn-d" onclick="redoAction()" title="Wiederholen" disabled>↪</button>
-  <button class="header-btn" onclick="openStatsModal()" title="Statistik">📊</button>
-  <button class="header-btn" onclick="exportCSV()" title="CSV Export">⬇</button>
-  <button class="header-btn" onclick="openModal('modal-io')" title="Archiv">📦</button>
-  <button class="header-btn" onclick="printPDF()" title="PDF">📄</button>
-  <button class="header-btn" onclick="toggleFilterBar()" title="Filter">🔍</button>
-  <button class="header-btn" onclick="openCopyMonthModal()" title="Monat kopieren">📋</button>
-  <button class="header-btn" onclick="openModal('modal-shifts')" title="Dienste">⚙️</button>
-  <button class="header-btn" onclick="toggleTheme()" title="Theme">🌙</button>
-  <button class="header-btn" onclick="togglePanMode()" title="Scrollen">✋</button>
+  <button class="header-btn" id="undo-btn-d" onclick="undoAction()" title="Rückgängig" disabled><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M3 13A9 9 0 1 0 5.17 5.17L3 7"/></svg></button>
+  <button class="header-btn" id="redo-btn-d" onclick="redoAction()" title="Wiederholen" disabled><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"/><path d="M21 13A9 9 0 1 1 18.83 5.17L21 7"/></svg></button>
+  <button class="header-btn" onclick="openStatsModal()" title="Statistik"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></button>
+  <button class="header-btn" onclick="exportCSV()" title="CSV Export"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+  <button class="header-btn" onclick="openModal('modal-io')" title="Archiv"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg></button>
+  <button class="header-btn" onclick="printPDF()" title="PDF"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg></button>
+  <button class="header-btn" onclick="toggleFilterBar()" title="Filter"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg></button>
+  <button class="header-btn" onclick="openCopyMonthModal()" title="Monat kopieren"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+  <button class="header-btn" onclick="openModal('modal-shifts')" title="Dienste"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M7 9h4M13 9h4M7 12h3M13 12h3"/></svg></button>
+  <button class="header-btn" onclick="toggleTheme()" title="Theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
+  <button class="header-btn" onclick="togglePanMode()" title="Scrollen"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/></svg></button>
 </div>
 
 
@@ -3122,7 +3195,7 @@ td.we-off-b { background: rgba(5,150,105,0.04) !important; }
       <span style="color:var(--border)">·</span>
       <span id="emp-modal-we-b" style="color:#34d399;font-weight:600"></span>
       <div style="flex:1"></div>
-      <button class="btn btn-secondary" style="font-size:10.5px;padding:4px 10px" onclick="autoAssignWeGroups()" title="Alle Mitarbeiter gleichmäßig auf A & B verteilen">⚡ Auto A/B</button>
+      <button class="btn btn-secondary" style="font-size:10.5px;padding:4px 10px" onclick="autoAssignWeGroups()" title="Alle Mitarbeiter gleichmäßig auf A & B verteilen"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Auto A/B</button>
     </div>
     <div id="emp-list-container" class="emp-list"></div>
     <div class="btn-row" style="margin-top:12px;justify-content:flex-start">
@@ -3260,7 +3333,7 @@ td.we-off-b { background: rgba(5,150,105,0.04) !important; }
         style="padding:6px 14px;border:none;border-radius:6px 6px 0 0;font-size:12px;font-weight:600;cursor:pointer;background:var(--glass2);color:var(--text2)">Monats-Check</button>
       <div style="flex:1"></div>
       <button onclick="markHolidaysAsFrei()" style="padding:5px 12px;border:1px solid var(--border);border-radius:6px;font-size:11px;font-weight:600;background:var(--glass2);color:var(--text2);cursor:pointer;margin-bottom:2px"
-        title="Alle freien Feiertage automatisch als 'X' markieren">🏖 Feiertage → Frei</button>
+        title="Alle freien Feiertage automatisch als 'X' markieren"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 18a5 5 0 0 0-10 0"/><line x1="12" y1="2" x2="12" y2="9"/><line x1="4.22" y1="10.22" x2="5.64" y2="11.64"/><line x1="1" y1="18" x2="3" y2="18"/><line x1="21" y1="18" x2="23" y2="18"/><line x1="18.36" y1="11.64" x2="19.78" y2="10.22"/><line x1="23" y1="22" x2="1" y2="22"/><polyline points="8 6 12 2 16 6"/></svg> Feiertage → Frei</button>
     </div>
     <div id="stats-content" style="padding:16px 0 4px"></div>
     <div class="btn-row">
@@ -3881,7 +3954,7 @@ function renderTable() {
       <div class="emp-name" style="display:flex;align-items:center;gap:5px">${emp.name} ${weBadge} ${prefDot}</div>
       <div class="emp-role">${emp.role}</div>
       <div class="emp-fill-hint">Doppelklick: Bearbeiten • Rechtsklick: Ausfüllen</div>
-      <button class="row-clear-btn" title="Gesamten Monat leeren" onclick="event.stopPropagation();clearEmployeeMonth('${emp.id}')">🗑</button>
+      <button class="row-clear-btn" title="Monat leeren" onclick="event.stopPropagation();clearEmployeeMonth('${emp.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
     </td>`;
 
     if (settings.cols.vz)   tbHTML += `<td class="stat-cell stat-vz" style="position:sticky;left:${statLeftMap.vz}px">${emp.vz}%</td>`;
@@ -4928,8 +5001,8 @@ function renderEmpList() {
         ${prefTag ? `<div style="margin-top:4px">${prefTag}</div>` : ''}
       </div>
       <div class="emp-actions">
-        <button class="icon-btn" onclick="openEditEmployee('${emp.id}')" title="Bearbeiten">✏️</button>
-        <button class="icon-btn danger" onclick="deleteEmployee('${emp.id}')" title="Entfernen">🗑️</button>
+        <button class="icon-btn" onclick="openEditEmployee('${emp.id}')" title="Bearbeiten"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+        <button class="icon-btn danger" onclick="deleteEmployee('${emp.id}')" title="Entfernen"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
       </div>
     `;
     item.addEventListener('dragstart', e => { e.dataTransfer.setData('emp-reorder', emp.id); });
@@ -5053,7 +5126,7 @@ function renderShiftConfig() {
         <input class="color-inp" type="color" value="${st.color}" oninput="updateShiftPreview(this)" title="Schriftfarbe">
         <input class="color-inp" type="color" value="${st.bg}" oninput="updateShiftPreview(this)" title="Hintergrundfarbe">
       </div>
-      <button class="icon-btn danger" onclick="removeShiftTypeByIdx(${idx})" title="Löschen">🗑️</button>
+      <button class="icon-btn danger" onclick="removeShiftTypeByIdx(${idx})" title="Löschen"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
     `;
 
     // Drag reorder
